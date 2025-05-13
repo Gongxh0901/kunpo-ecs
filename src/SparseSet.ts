@@ -4,7 +4,6 @@
  * 提供O(1)复杂度的添加、删除和查找操作
  */
 
-import { ComponentRecyclePool } from "./ComponentRecyclePool";
 import { IComponent } from "./interface/IComponent";
 export class SparseSet<T extends IComponent> {
     /**
@@ -21,11 +20,6 @@ export class SparseSet<T extends IComponent> {
      * 密集数组索引到实体ID的反向映射
      */
     private entities: number[] = [];
-
-    /**
-     * 组件回收池
-     */
-    public recyclePool: ComponentRecyclePool<T> = null;
 
     /**
      * 添加或更新组件

@@ -1,6 +1,7 @@
 // console.log('Hello TypeScript!');
 
 import { Component } from "./Component";
+import { _ecsdecorator } from "./ECSDecorator";
 import { ComponentType } from "./interface/ComponentType";
 
 // function getBit(value: number) {
@@ -180,12 +181,15 @@ import { ComponentType } from "./interface/ComponentType";
 // console.log("速度组件数量:", velocities.size);
 
 
+_ecsdecorator.ECSComponent("Position", { describe: "位置组件" });
 class Position extends Component {
+    @_ecsdecorator.ECSProp({ type: "int", defaultValue: 0 })
     x: number = 0;
+    @_ecsdecorator.ECSProp({ type: "int", defaultValue: 0 })
     y: number = 0;
 
-    static componentType: number = 1;
-    static componentName: string = "Position";
+    // static componentType: number = 1;
+    // static componentName: string = "Position";
 
     reset(): void {
         this.x = 0;
@@ -197,5 +201,7 @@ function test<T extends Component>(component: ComponentType<T>) {
     console.log(component.componentType);
     console.log(component.componentName);
 }
+
+let position = new Position();
 
 test(Position);

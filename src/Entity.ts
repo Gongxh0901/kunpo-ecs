@@ -4,7 +4,7 @@
  * @Description: 实体接口
  */
 
-
-export class Entity {
-
-}
+/**
+ * 实体仅仅是一个不为0的整数
+ */
+export type Entity = number;

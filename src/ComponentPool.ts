@@ -2,20 +2,28 @@
  * 组件池 - 使用稀疏集合高效管理不同类型的组件
  */
 import { ComponentRecyclePool } from './ComponentRecyclePool';
+import { _ecsdecorator } from './ECSDecorator';
+import { Entity } from './Entity';
+import { ComponentType } from './interface/ComponentType';
 import { IComponent } from './interface/IComponent';
 import { Mask } from './Mask';
 import { SparseSet } from './SparseSet';
 
 export class ComponentPool {
     /**
-     * 组件类型对应的稀疏集合
+     * 组件类型对应的稀疏集合 组件类型 -> 稀疏集合
      */
     private pools: Map<number, SparseSet<IComponent>> = new Map();
 
     /**
-     * 实体掩码
+     * 组件回收池 组件类型 -> 回收池
      */
-    private entityMasks: Map<number, Mask> = new Map();
+    private recyclePools: Map<number, ComponentRecyclePool<IComponent>> = new Map();
+
+    /**
+     * 实体掩码 实体 -> 组件集合的掩码
+     */
+    private entityMasks: Map<Entity, Mask> = new Map();
 
     /**
      * 组件池初始化
@@ -25,40 +33,46 @@ export class ComponentPool {
         this.entityMasks.clear();
         // 用注册的所有组件数据 创建稀疏集合
 
+        let componentMaps = _ecsdecorator.getComponentMaps();
+        for (let [ctor, info] of componentMaps.entries()) {
+            let type = ctor.componentType;
+
+        }
+
         for (let i = 0; i < 0; i++) {
             // 创建组件稀疏集合
-            let sparseSet = new SparseSet<IComponent>();
+            this.pools.set(i, new SparseSet<IComponent>());
             // 创建组件回收池
-            sparseSet.recyclePool = new ComponentRecyclePool<IComponent>(null, 0, 256);
-            this.pools.set(i, sparseSet);
+            this.recyclePools.set(i, new ComponentRecyclePool<IComponent>(null, 0, 256));
         }
     }
 
     /**
      * 获取或创建特定ID的组件池
-     * @param componentId 组件ID
+     * @param componentType 组件类型
      * @returns 对应的稀疏集合
      */
-    private getPool<T extends IComponent>(componentId: number): SparseSet<T> {
-        return this.pools.get(componentId) as SparseSet<T>;
+    private getPool<T extends IComponent>(componentType: number): SparseSet<T> {
+        return this.pools.get(componentType) as SparseSet<T>;
     }
 
     /**
      * 添加组件到实体
      * @param entityId 实体ID
      * @param componentId 组件ID
-     * @param component 组件数据
+     * @param ctor 组件构造函数
      */
-    public addComponent<T extends IComponent>(entityId: number, componentId: number, component: T): void {
+    public addComponent<T extends IComponent>(entityId: number, component: ComponentType<T>): void {
+        let type = component.componentType;
         // 获取对应组件池并添加组件
-        const pool = this.getPool<T>(componentId);
-        pool.add(entityId, component);
+        const pool = this.getPool<T>(type);
+        pool.add(entityId, new component());
 
         // 使用Mask标记组件
         if (!this.entityMasks.has(entityId)) {
             this.entityMasks.set(entityId, new Mask());
         }
-        this.entityMasks.get(entityId)!.set(componentId);
+        this.entityMasks.get(entityId)!.set(type);
     }
 
     /**
@@ -67,8 +81,9 @@ export class ComponentPool {
      * @param componentId 组件ID
      * @returns 是否成功删除
      */
-    public removeComponent(entityId: number, componentId: number): boolean {
-        const pool = this.pools.get(componentId);
+    public removeComponent<T extends IComponent>(entityId: number, component: ComponentType<T>): boolean {
+        let type = component.componentType;
+        const pool = this.pools.get(type);
         if (!pool || !pool.has(entityId)) {
             return false;
         }
@@ -78,7 +93,7 @@ export class ComponentPool {
 
         // 更新Mask
         if (result && this.entityMasks.has(entityId)) {
-            this.entityMasks.get(entityId)!.delete(componentId);
+            this.entityMasks.get(entityId)!.delete(type);
         }
 
         return result;
@@ -90,12 +105,13 @@ export class ComponentPool {
      * @param componentId 组件ID
      * @returns 组件或undefined(如不存在)
      */
-    public getComponent<T extends IComponent>(entityId: number, componentId: number): T | undefined {
-        const pool = this.pools.get(componentId) as SparseSet<T> | undefined;
+    public getComponent<T extends IComponent>(entity: Entity, component: ComponentType<T>): T | undefined {
+        let type = component.componentType;
+        const pool = this.pools.get(type) as SparseSet<T>;
         if (!pool) {
             return undefined;
         }
-        return pool.get(entityId);
+        return pool.get(entity) as T;
     }
 
     /**
@@ -113,10 +129,10 @@ export class ComponentPool {
 
     /**
      * 删除实体的所有组件
-     * @param entityId 实体ID
+     * @param entity 实体
      */
-    public removeAllComponents(entityId: number): void {
-        const entityMask = this.entityMasks.get(entityId);
+    public removeAllComponents(entity: Entity): void {
+        const entityMask = this.entityMasks.get(entity);
         if (!entityMask) {
             return;
         }
@@ -124,12 +140,19 @@ export class ComponentPool {
         // 遍历所有组件池，移除该实体的组件
         for (const [componentId, pool] of this.pools.entries()) {
             if (entityMask.has(componentId)) {
-                pool.remove(entityId);
+                pool.remove(entity);
             }
         }
 
         // 清除记录
-        this.entityMasks.delete(entityId);
+        this.entityMasks.delete(entity);
+    }
+
+    /**
+     * 获取实体的组件掩码
+     */
+    public getEntityMask(entity: Entity): Mask {
+        return this.entityMasks.get(entity)!;
     }
 
     // /**

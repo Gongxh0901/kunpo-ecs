@@ -9,6 +9,10 @@
       "skipLibCheck": true,
       "esModuleInterop": true,
       "stripInternal": true,
+      "types": [
+        "@cocos/creator-types/engine",
+        "@cocos/creator-types/editor"
+      ]
     },
     "include": [
       "src/**/*"

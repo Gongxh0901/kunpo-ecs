@@ -15,7 +15,7 @@ export abstract class Component implements IComponent {
     /** 
      * 组件名称
      */
-    static componentName: string = "";
+    static componentName: string = "none";
 
     /** 组件销毁时 用来重置数据 */
     public abstract reset(): void;

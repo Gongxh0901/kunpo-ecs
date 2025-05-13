@@ -1,15 +1,36 @@
 {
-    "name": "kunpo-esc",
-    "version": "1.0.0",
+    "name": "kunpoecs",
+    "version": "0.0.1",
     "description": "一个ts实现的ECS系统",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
-    "scripts": {
-      "build": "tsc",
-      "start": "ts-node src/index.ts",
-      "dev": "ts-node-dev --respawn src/index.ts",
-      "test": "echo \"Error: no test specified\" && exit 1"
+    "exports": {
+        ".": {
+            "require": "./dist/kunpoecs.cjs",
+            "import": "./dist/kunpoecs.mjs",
+            "types": "./dist/kunpoecs.d.ts",
+            "default": "./dist/kunpoecs.cjs"
+        },
+        "./min": {
+            "require": "./dist/kunpoecs.min.cjs",
+            "import": "./dist/kunpoecs.min.mjs"
+        }
     },
+    "scripts": {
+      "dev": "ts-node-dev --respawn src/index.ts",
+      "clean": "rm -rf dist",
+      "build": "npm run clean && rollup -c rollup.config.mjs",
+      "copy": "cp -r dist/* ../KunpoDemo/node_modules/kunpoecs/dist/",
+      "build:all": "npm run build"
+  },
+  "files": [
+      "dist/kunpoecs.cjs",
+      "dist/kunpoecs.mjs",
+      "dist/kunpoecs.min.cjs",
+      "dist/kunpoecs.min.mjs",
+      "dist/kunpoecs.d.ts"
+  ],
+
     "author": "gongxh",
     "license": "ISC",
     "repository": {
@@ -17,9 +38,15 @@
       "url": "https://github.com/Gongxh0901/kunpo-esc"
     },
     "devDependencies": {
+      "@cocos/creator-types": "^3.8.5",
       "@types/node": "^20.11.24",
+      "@rollup/plugin-terser": "^0.4.4",
+      "@rollup/plugin-typescript": "^12.1.2",
+      "rollup": "^4.28.1",
+      "rollup-plugin-dts": "^6.1.1",
       "ts-node": "^10.9.2",
       "ts-node-dev": "^2.0.0",
-      "typescript": "^5.3.3"
+      "typescript": "^5.3.3",
+      "tslib": "^2.6.2"
     }
-}  
+} 
