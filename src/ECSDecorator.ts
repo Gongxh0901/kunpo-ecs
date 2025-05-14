@@ -13,6 +13,7 @@ function ObjectPropJoin(obj: Record<string, any>, key: string): any {
     return (obj[key] = Object.assign({}, obj[key]));
 }
 
+let cuid = 0;
 export namespace _ecsdecorator {
     /** @internal */
     const ECPropMeta = "__ecpropmeta__"
@@ -117,13 +118,11 @@ export namespace _ecsdecorator {
      * 实体组件装饰器
      * @param {string} res.describe 组件描述
      */
-    export function ECSComponent(name: string, res?: { describe?: string }): Function {
+    export function ecsclass(name: string, res?: { describe?: string }): Function {
         /** target 类的构造函数 */
-        console.log(">>>>", res);
         return function (ctor: any): void {
-            console.log(`组件装饰器 组件【${name}】`, ctor.componentType, ctor.componentName);
-            ctor.componentType = 1;
-            ctor.componentName = name;
+            ctor.ctype = ++cuid;
+            ctor.cname = name;
             eclassMap.set(ctor, {
                 name: name,
                 props: ctor[ECPropMeta],
@@ -133,7 +132,7 @@ export namespace _ecsdecorator {
     }
 
     /** 组件属性装饰器 */
-    export function ECSProp(options: ECPropInfo): any {
+    export function ecsprop(options: ECPropInfo): any {
         return function (target: any, propName: any): void {
             ObjectPropJoin(target.constructor, ECPropMeta)[propName] = options;
         };

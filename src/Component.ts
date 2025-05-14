@@ -9,14 +9,16 @@ import { IComponent } from "./interface/IComponent";
 export abstract class Component implements IComponent {
     /** 
      * 组件类型, 自动分配
-     * @internal
      */
-    static componentType: number = 0;
+    static ctype: number = 0;
     /** 
      * 组件名称
      */
-    static componentName: string = "none";
+    static cname: string = "";
 
-    /** 组件销毁时 用来重置数据 */
+    /** 
+     * 组件销毁时 用来重置数据
+     * @internal
+     */
     public abstract reset(): void;
 }

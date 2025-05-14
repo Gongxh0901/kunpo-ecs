@@ -21,17 +21,19 @@ export class Mask {
      * 设置掩码
      * @param num
      */
-    public set(num: number) {
+    public set(num: number): Mask {
         /// >>> 无符号位移 高位补0
         this.mask[(num / 31) >>> 0] |= 1 << num % 31;
+        return this;
     }
 
     /**
      * 移除掩码
      * @param num
      */
-    public delete(num: number) {
+    public delete(num: number): Mask {
         this.mask[(num / 31) >>> 0] &= ~(1 << num % 31);
+        return this;
     }
 
     /**
@@ -39,7 +41,7 @@ export class Mask {
      * @param num
      * @returns
      */
-    public has(num: number) {
+    public has(num: number): boolean {
         // !!取布尔值 0或1
         return !!(this.mask[(num / 31) >>> 0] & (1 << num % 31));
     }
@@ -49,7 +51,7 @@ export class Mask {
      * @param other 
      * @returns 
      */
-    public any(other: Mask) {
+    public any(other: Mask): boolean {
         for (let i = 0; i < this.size; i++) {
             if (this.mask[i] & other.mask[i]) {
                 return true;
@@ -63,7 +65,7 @@ export class Mask {
      * @param other 
      * @returns 
      */
-    public include(other: Mask) {
+    public include(other: Mask): boolean {
         for (let i = 0; i < this.size; i++) {
             if ((this.mask[i] & other.mask[i]) != other.mask[i]) {
                 return false;
@@ -72,9 +74,10 @@ export class Mask {
         return true;
     }
 
-    public clear() {
+    public clear(): Mask {
         for (let i = 0; i < this.size; i++) {
             this.mask[i] = 0;
         }
+        return this;
     }
 }

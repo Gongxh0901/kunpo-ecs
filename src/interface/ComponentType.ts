@@ -9,6 +9,6 @@ import { Component } from "../Component";
 
 export interface ComponentType<T extends Component> {
     new(): T;
-    componentType: number;
-    componentName: string;
+    ctype: number;
+    cname: string;
 }

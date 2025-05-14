@@ -4,102 +4,90 @@
  * 提供O(1)复杂度的添加、删除和查找操作
  */
 
+import { Entity } from "./Entity";
 import { IComponent } from "./interface/IComponent";
 export class SparseSet<T extends IComponent> {
     /**
      * 存储实际组件数据的密集数组
+     * @internal
      */
     private dense: T[] = [];
 
     /**
-     * 实体ID到密集数组索引的映射
+     * 实体到密集数组索引的映射 (实体 -> 数组索引)
+     * @internal
      */
-    private sparse: Map<number, number> = new Map();
+    private readonly sparse: Map<Entity, number> = new Map();
 
     /**
-     * 密集数组索引到实体ID的反向映射
+     * 密集数组索引实体的反向映射 (数组索引 -> 实体)
+     * @internal
      */
-    private entities: number[] = [];
+    private entities: Entity[] = [];
 
     /**
      * 添加或更新组件
-     * @param entityId 实体ID
+     * @param entity 实体
      * @param component 组件数据
+     * @internal
      */
-    public add(entityId: number, component: T): void {
-        // 如果实体已有此组件，抛出错误
-        if (this.has(entityId)) {
-            throw new Error(`Entity ${entityId} already has component`);
-        }
+    public add(entity: Entity, component: T): void {
         // 添加到密集数组末尾
         const index = this.dense.length;
         this.dense.push(component);
-        this.entities.push(entityId);
+        this.entities.push(entity);
 
         // 更新映射
-        this.sparse.set(entityId, index);
+        this.sparse.set(entity, index);
     }
 
     /**
-     * 删除组件
-     * @param entityId 实体ID
-     * @returns 是否成功删除
+     * 删除实体上的组件
+     * @param entity 实体
+     * @returns 返回被删除的组件
+     * @internal
      */
-    public remove(entityId: number): boolean {
-        if (!this.has(entityId)) {
-            return false;
-        }
-
-        const index = this.sparse.get(entityId)!;
+    public remove(entity: Entity): T {
+        const index = this.sparse.get(entity)!;
         const lastIndex = this.dense.length - 1;
 
         // 如果不是最后一个元素，用最后一个元素替换被删除的元素
         if (index !== lastIndex) {
             // 移动最后一个元素到当前位置
             this.dense[index] = this.dense[lastIndex];
-            const lastEntityId = this.entities[lastIndex];
-            this.entities[index] = lastEntityId;
+            const lastEntity = this.entities[lastIndex];
+            this.entities[index] = lastEntity;
 
             // 更新最后一个元素的映射
-            this.sparse.set(lastEntityId, index);
+            this.sparse.set(lastEntity, index);
         }
 
         // 移除最后一个元素
-        this.dense.pop();
+        let component = this.dense.pop();
         this.entities.pop();
 
         // 删除映射
-        this.sparse.delete(entityId);
-        return true;
+        this.sparse.delete(entity);
+        return component;
     }
 
     /**
      * 获取组件
-     * @param entityId 实体ID
-     * @returns 组件或undefined(如不存在)
+     * @param entity 实体
+     * @returns 组件
+     * @internal
      */
-    public get(entityId: number): T | undefined {
-        if (!this.has(entityId)) {
-            return undefined;
-        }
-
-        const index = this.sparse.get(entityId)!;
+    public get(entity: Entity): T {
+        const index = this.sparse.get(entity)!;
         return this.dense[index];
-    }
-
-    /**
-     * 检查实体是否有此组件
-     * @param entityId 实体ID
-     */
-    public has(entityId: number): boolean {
-        return this.sparse.has(entityId);
     }
 
     /**
      * 遍历所有组件
      * @param callback 回调函数，参数为组件和实体ID
+     * @internal
      */
-    public forEach(callback: (component: T, entityId: number) => void): void {
+    public forEach(callback: (component: T, entity: Entity) => void): void {
         for (let i = 0; i < this.dense.length; i++) {
             callback(this.dense[i], this.entities[i]);
         }
@@ -107,58 +95,63 @@ export class SparseSet<T extends IComponent> {
 
     /**
      * 获取组件总数
+     * @internal
      */
     public get size(): number {
         return this.dense.length;
     }
 
     /**
-     * 清空所有组件
+     * 清理所有内容
+     * @internal
      */
-    public clear(): void {
+    public dispose(): void {
         this.dense = [];
         this.entities = [];
         this.sparse.clear();
     }
 
-    /**
-     * 获取所有实体ID
-     */
-    public getEntityIds(): number[] {
-        return [...this.entities];
-    }
+    // /**
+    //  * 获取所有实体ID
+    //  */
+    // public getEntities(): Entity[] {
+    //     return [...this.entities];
+    // }
 
-    /**
-     * 获取所有组件
-     */
-    public getComponents(): T[] {
-        return [...this.dense];
-    }
+    // /**
+    //  * 获取所有组件
+    //  */
+    // public getComponents(): T[] {
+    //     return [...this.dense];
+    // }
 
-    /**
-     * 实现迭代器接口，支持for...of循环
-     */
-    public *[Symbol.iterator](): Iterator<[number, T]> {
-        for (let i = 0; i < this.dense.length; i++) {
-            yield [this.entities[i], this.dense[i]];
-        }
-    }
+    // /**
+    //  * 实现迭代器接口，支持for...of循环
+    //  * @internal
+    //  */
+    // public *[Symbol.iterator](): Iterator<[Entity, T]> {
+    //     for (let i = 0; i < this.dense.length; i++) {
+    //         yield [this.entities[i], this.dense[i]];
+    //     }
+    // }
 
-    /**
-     * 仅迭代组件
-     */
-    public *values(): IterableIterator<T> {
-        for (const component of this.dense) {
-            yield component;
-        }
-    }
+    // /**
+    //  * 仅迭代组件
+    //  * @internal
+    //  */
+    // public *values(): IterableIterator<T> {
+    //     for (const component of this.dense) {
+    //         yield component;
+    //     }
+    // }
 
-    /**
-     * 仅迭代实体ID
-     */
-    public *keys(): IterableIterator<number> {
-        for (const entityId of this.entities) {
-            yield entityId;
-        }
-    }
+    // /**
+    //  * 仅迭代实体ID
+    //  * @internal
+    //  */
+    // public *keys(): IterableIterator<Entity> {
+    //     for (const entity of this.entities) {
+    //         yield entity;
+    //     }
+    // }
 } 
