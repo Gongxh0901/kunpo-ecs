@@ -5,8 +5,8 @@
  */
 
 import { Entity } from "../Entity";
-import { ComponentType } from "./ComponentType";
-import { IComponent } from "./IComponent";
+import { ComponentType } from "../component/ComponentType";
+import { IComponent } from "../component/IComponent";
 
 export interface Query {
     // 迭代满足条件的实体

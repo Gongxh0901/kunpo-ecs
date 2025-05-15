@@ -4,8 +4,8 @@
  * 提供O(1)复杂度的添加、删除和查找操作
  */
 
-import { Entity } from "./Entity";
-import { IComponent } from "./interface/IComponent";
+import { Entity } from "../Entity";
+import { IComponent } from "../component/IComponent";
 export class SparseSet<T extends IComponent> {
     /**
      * 存储实际组件数据的密集数组
@@ -88,7 +88,8 @@ export class SparseSet<T extends IComponent> {
      * @internal
      */
     public forEach(callback: (component: T, entity: Entity) => void): void {
-        for (let i = 0; i < this.dense.length; i++) {
+        let len = this.dense.length;
+        for (let i = 0; i < len; i++) {
             callback(this.dense[i], this.entities[i]);
         }
     }

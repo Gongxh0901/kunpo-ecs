@@ -4,12 +4,14 @@
  * @Description: 
  */
 
-import { CommandPool } from "./CommandPool";
-import { ComponentPool } from "./ComponentPool";
+import { Command, CommandType } from "./command/Command";
+import { CommandPool } from "./command/CommandPool";
+import { ComponentPool } from "./component/ComponentPool";
+import { ComponentType } from "./component/ComponentType";
+import { IComponent } from "./component/IComponent";
 import { Entity } from "./Entity";
-import { ComponentType } from "./interface/ComponentType";
-import { IComponent } from "./interface/IComponent";
-import { Command, CommandType } from "./utils/Command";
+import { ISystem } from "./system/ISystem";
+import { SystemGroup } from "./system/SystemGroup";
 import { RecyclePool } from "./utils/RecyclePool";
 
 export class World {
@@ -40,6 +42,11 @@ export class World {
      * @internal
      */
     private commandPool: CommandPool = null;
+    /**
+     * 根系统
+     * @internal
+     */
+    private system: SystemGroup = null;
 
     /**
      * 创建一个世界
@@ -47,6 +54,14 @@ export class World {
      */
     constructor(name: string) {
         this.name = name;
+    }
+
+    /**
+     * 添加系统
+     * @param system 系统
+     */
+    public addSystem(system: ISystem): void {
+        this.system.addSystem(system);
     }
 
     /** 
@@ -109,8 +124,7 @@ export class World {
      */
     public update(dt: number): void {
         // 更新系统
-
-
+        this.system.update(dt);
         // 执行缓冲池中的命令
         this.commandPool.update();
     }

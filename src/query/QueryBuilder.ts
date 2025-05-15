@@ -4,8 +4,8 @@
  * @Description: 查询构建器模式
  */
 
-import { ComponentType } from "./ComponentType";
-import { IComponent } from "./IComponent";
+import { ComponentType } from "../component/ComponentType";
+import { IComponent } from "../component/IComponent";
 import { Query } from "./Query";
 
 // 示例查询构建器接口

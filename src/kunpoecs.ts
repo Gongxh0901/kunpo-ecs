@@ -1,9 +1,9 @@
 
 /** EC */
-export { Component } from './Component';
+export { Component } from './component/Component';
+export { ComponentType } from './component/ComponentType';
+export { IComponent } from './component/IComponent';
 export { _ecsdecorator } from './ECSDecorator';
 export { Entity } from './Entity';
-export { ComponentType } from './interface/ComponentType';
-export { IComponent } from './interface/IComponent';
 export { World } from './World';
 

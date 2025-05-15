@@ -81,8 +81,9 @@ export class RecyclePool<T> {
      * 批量回收对象
      */
     public insertBatch(objs: T[]): void {
-        for (let obj of objs) {
-            this.insert(obj);
+        let len = objs.length;
+        for (let i = 0; i < len; i++) {
+            this.insert(objs[i]);
         }
     }
 
@@ -91,7 +92,8 @@ export class RecyclePool<T> {
      */
     public dispose(): void {
         // 重置所有已创建的对象
-        for (let i = 0; i < this._capacity; i++) {
+        let len = this._capacity;
+        for (let i = 0; i < len; i++) {
             this.reset(this.pool[i]);
         }
         // 重置计数

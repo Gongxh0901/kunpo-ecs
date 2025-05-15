@@ -4,7 +4,7 @@
  * @Description: 组件接口
  */
 
-import { IComponent } from "./interface/IComponent";
+import { IComponent } from "./IComponent";
 
 export abstract class Component implements IComponent {
     /** 

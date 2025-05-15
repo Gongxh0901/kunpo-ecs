@@ -4,7 +4,7 @@
  * @Description: Uint32Array实现的掩码
  */
 
-import { IMask } from "../interface/IMask";
+import { IMask } from "./IMask";
 
 export class ArrayMask implements IMask {
     /** 32位二进制数组 由于&操作符最大只能30位操作 故每个三十二位二进制保存30个组件 */

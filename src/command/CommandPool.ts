@@ -4,10 +4,10 @@
  * @Description: 命令缓冲池
  */
 
-import { ComponentPool } from "./ComponentPool";
+import { Command, CommandType } from "./command/Command";
+import { ComponentPool } from "./component/ComponentPool";
 import { Entity } from "./Entity";
 import { ComponentType, IComponent } from "./kunpoecs";
-import { Command, CommandType } from "./utils/Command";
 import { RecyclePool } from "./utils/RecyclePool";
 
 export class CommandPool {
@@ -51,11 +51,12 @@ export class CommandPool {
     }
 
     public update() {
-        let length = this.pool.length;
+
         let componentPool = this.componentPool;
         let entityPool = this.entityPool;
 
-        for (let i = 0; i < length; i++) {
+        let len = this.pool.length;
+        for (let i = 0; i < len; i++) {
             let command = this.pool[i];
             let entity = command.entity;
             if (command.type === CommandType.Add) {

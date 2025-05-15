@@ -4,7 +4,7 @@
  * @Description: 
  */
 
-import { Component } from "../Component";
+import { Component } from "./Component";
 
 
 export interface ComponentType<T extends Component> {

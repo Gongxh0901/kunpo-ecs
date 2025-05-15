@@ -115,7 +115,7 @@ export namespace _ecsdecorator {
     }
 
     /**
-     * 实体组件装饰器
+     * ecs组件装饰器
      * @param {string} res.describe 组件描述
      */
     export function ecsclass(name: string, res?: { describe?: string }): Function {
@@ -128,6 +128,17 @@ export namespace _ecsdecorator {
                 props: ctor[ECPropMeta],
                 describe: res?.describe || name
             });
+        };
+    }
+
+    /**
+     * ecs系统装饰器
+     * @param {string} res.describe 组件描述
+     */
+    export function ecsystem(name: string, res?: { describe?: string }): Function {
+        /** target 类的构造函数 */
+        return function (ctor: any): void {
+            ctor.name = name;
         };
     }
 

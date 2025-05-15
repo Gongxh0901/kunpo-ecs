@@ -1,15 +1,15 @@
 /**
  * 组件池 - 使用稀疏集合高效管理不同类型的组件
  */
-import { _ecsdecorator } from './ECSDecorator';
-import { Entity } from './Entity';
-import { ComponentType } from './interface/ComponentType';
-import { IComponent } from './interface/IComponent';
-import { BIGINT_SUPPORTED, IMask } from './interface/IMask';
-import { SparseSet } from './SparseSet';
-import { ArrayMask } from './utils/ArrayMask';
-import { BigIntMask } from './utils/BigIntMask';
-import { RecyclePool } from './utils/RecyclePool';
+import { _ecsdecorator } from '../ECSDecorator';
+import { Entity } from '../Entity';
+import { ArrayMask } from '../utils/ArrayMask';
+import { BigIntMask } from '../utils/BigIntMask';
+import { BIGINT_SUPPORTED, IMask } from '../utils/IMask';
+import { RecyclePool } from '../utils/RecyclePool';
+import { SparseSet } from '../utils/SparseSet';
+import { ComponentType } from './ComponentType';
+import { IComponent } from './IComponent';
 
 export class ComponentPool {
     /**
@@ -51,7 +51,7 @@ export class ComponentPool {
         // 用注册的所有组件数据 创建稀疏集合
 
         let componentMaps = _ecsdecorator.getComponentMaps();
-        for (let [ctor, info] of componentMaps.entries()) {
+        for (let ctor of componentMaps.keys()) {
             let type = ctor.ctype;
             // 创建稀疏集合
             this.pools.set(type, new SparseSet<IComponent>());

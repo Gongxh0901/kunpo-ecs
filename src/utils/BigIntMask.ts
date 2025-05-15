@@ -4,7 +4,7 @@
  * @Description: BigInt实现的掩码
  */
 
-import { IMask } from "../interface/IMask";
+import { IMask } from "./IMask";
 
 export class BigIntMask implements IMask {
     private mask: bigint = BigInt(0);
