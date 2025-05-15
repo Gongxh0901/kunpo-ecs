@@ -1,10 +1,12 @@
 /**
  * @Author: Gongxh
  * @Date: 2025-05-13
- * @Description: 实体掩码
+ * @Description: Uint32Array实现的掩码
  */
 
-export class Mask {
+import { IMask } from "../interface/IMask";
+
+export class ArrayMask implements IMask {
     /** 32位二进制数组 由于&操作符最大只能30位操作 故每个三十二位二进制保存30个组件 */
     private mask: Uint32Array;
     private size: number = 0;
@@ -21,7 +23,7 @@ export class Mask {
      * 设置掩码
      * @param num
      */
-    public set(num: number): Mask {
+    public set(num: number): ArrayMask {
         /// >>> 无符号位移 高位补0
         this.mask[(num / 31) >>> 0] |= 1 << num % 31;
         return this;
@@ -31,7 +33,7 @@ export class Mask {
      * 移除掩码
      * @param num
      */
-    public delete(num: number): Mask {
+    public delete(num: number): ArrayMask {
         this.mask[(num / 31) >>> 0] &= ~(1 << num % 31);
         return this;
     }
@@ -51,7 +53,7 @@ export class Mask {
      * @param other 
      * @returns 
      */
-    public any(other: Mask): boolean {
+    public any(other: ArrayMask): boolean {
         for (let i = 0; i < this.size; i++) {
             if (this.mask[i] & other.mask[i]) {
                 return true;
@@ -65,7 +67,7 @@ export class Mask {
      * @param other 
      * @returns 
      */
-    public include(other: Mask): boolean {
+    public include(other: ArrayMask): boolean {
         for (let i = 0; i < this.size; i++) {
             if ((this.mask[i] & other.mask[i]) != other.mask[i]) {
                 return false;
@@ -74,7 +76,7 @@ export class Mask {
         return true;
     }
 
-    public clear(): Mask {
+    public clear(): ArrayMask {
         for (let i = 0; i < this.size; i++) {
             this.mask[i] = 0;
         }

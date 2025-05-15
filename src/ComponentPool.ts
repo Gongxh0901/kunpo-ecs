@@ -5,8 +5,10 @@ import { _ecsdecorator } from './ECSDecorator';
 import { Entity } from './Entity';
 import { ComponentType } from './interface/ComponentType';
 import { IComponent } from './interface/IComponent';
-import { Mask } from './Mask';
+import { BIGINT_SUPPORTED, IMask } from './interface/IMask';
 import { SparseSet } from './SparseSet';
+import { ArrayMask } from './utils/ArrayMask';
+import { BigIntMask } from './utils/BigIntMask';
 import { RecyclePool } from './utils/RecyclePool';
 
 export class ComponentPool {
@@ -26,12 +28,12 @@ export class ComponentPool {
      * 掩码回收池
      * @internal
      */
-    private readonly maskRecyclePool: RecyclePool<Mask> = null;
+    private readonly maskRecyclePool: RecyclePool<IMask> = null;
     /**
      * 实体掩码 实体 -> 组件集合的掩码
      * @internal
      */
-    private readonly entityMasks: Map<Entity, Mask> = new Map();
+    private readonly entityMasks: Map<Entity, IMask> = new Map();
 
     /**
      * 实体上组件计数器 实体 -> 组件数量
@@ -59,7 +61,7 @@ export class ComponentPool {
             }));
         }
         // 实体掩码回收池
-        this.maskRecyclePool = new RecyclePool<Mask>(128, () => new Mask(), (mask: Mask) => {
+        this.maskRecyclePool = new RecyclePool<IMask>(128, () => BIGINT_SUPPORTED ? new BigIntMask() : new ArrayMask(), (mask: IMask) => {
             mask.clear();
         });
     }
@@ -214,7 +216,7 @@ export class ComponentPool {
      * 获取实体的组件掩码
      * @internal
      */
-    public getEntityMask(entity: Entity): Mask {
+    public getEntityMask(entity: Entity): IMask {
         return this.entityMasks.get(entity);
     }
 

@@ -75,7 +75,6 @@ export class RecyclePool<T> {
         }
         this.reset(obj);
         this.pool[this._count++] = obj;
-
     }
 
     /** 

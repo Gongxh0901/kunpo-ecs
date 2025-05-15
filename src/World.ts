@@ -4,27 +4,13 @@
  * @Description: 
  */
 
+import { CommandPool } from "./CommandPool";
 import { ComponentPool } from "./ComponentPool";
 import { Entity } from "./Entity";
 import { ComponentType } from "./interface/ComponentType";
 import { IComponent } from "./interface/IComponent";
+import { Command, CommandType } from "./utils/Command";
 import { RecyclePool } from "./utils/RecyclePool";
-
-enum CommandType {
-    /** 添加一个组件 */
-    Add = 1,
-    /** 移除一个组件 */
-    RemoveOnly,
-    /** 移除实体上所有组件 */
-    RemoveAll
-}
-
-interface Command {
-    type: CommandType;
-    entity: Entity;
-    comp?: ComponentType<IComponent>;
-    component?: IComponent;
-}
 
 export class World {
     /** 世界名字 */
@@ -49,6 +35,11 @@ export class World {
      * @internal
      */
     private entityPool: RecyclePool<Entity> = null;
+    /**
+     * 命令池
+     * @internal
+     */
+    private commandPool: CommandPool = null;
 
     /**
      * 创建一个世界
@@ -66,6 +57,8 @@ export class World {
         this.componentPool = new ComponentPool();
         // 初始化实体回收池
         this.entityPool = new RecyclePool<Entity>(128, () => this.unique++);
+        // 初始化命令池
+        this.commandPool = new CommandPool(this.componentPool, this.entityPool);
     }
 
     /** 
@@ -80,7 +73,7 @@ export class World {
      * @param entity 实体
      */
     public removeEntity(entity: Entity): void {
-        this.cacheCommands.push({ type: CommandType.RemoveAll, entity: entity });
+        this.commandPool.addCommand(CommandType.RemoveAll, entity);
     }
 
     /** 
@@ -91,7 +84,7 @@ export class World {
      */
     public addComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): T {
         let component = this.componentPool.createComponent(comp);
-        this.cacheCommands.push({ type: CommandType.Add, entity: entity, comp: comp, component: component });
+        this.commandPool.addCommand(CommandType.Add, entity, comp, component);
         return component;
     }
 
@@ -101,7 +94,7 @@ export class World {
      * @param comp 组件类型
      */
     public removeComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): void {
-        this.cacheCommands.push({ type: CommandType.RemoveOnly, entity: entity, comp: comp });
+        this.commandPool.addCommand(CommandType.RemoveOnly, entity, comp);
     }
 
     /** 
@@ -117,22 +110,9 @@ export class World {
     public update(dt: number): void {
         // 更新系统
 
+
         // 执行缓冲池中的命令
-        for (let command of this.cacheCommands) {
-            let entity = command.entity;
-            if (command.type === CommandType.Add) {
-                this.componentPool.addComponent(entity, command.comp, command.component);
-            } else if (command.type === CommandType.RemoveOnly) {
-                if (this.componentPool.removeComponent(entity, command.comp) && this.componentPool.isEmptyEntity(entity)) {
-                    // 删除组件后，如果实体为空，则回收实体
-                    this.entityPool.insert(entity);
-                }
-            } else if (command.type === CommandType.RemoveAll) {
-                // 移除实体对应的所有组件 并回收实体
-                this.componentPool.removeAllComponents(entity) && this.entityPool.insert(entity);
-            }
-        }
-        this.cacheCommands.length = 0;
+        this.commandPool.update();
     }
 
     /**
@@ -143,5 +123,6 @@ export class World {
         this.cacheCommands.length = 0;
         this.componentPool.dispose();
         this.entityPool.dispose();
+        this.commandPool.dispose();
     }
 }
