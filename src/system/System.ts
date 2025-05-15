@@ -4,6 +4,7 @@
  * @Description: 系统基类
  */
 
+import { Query } from "../query/Query";
 import { World } from "../World";
 import { ISystem } from "./ISystem";
 
@@ -33,6 +34,11 @@ export abstract class System implements ISystem {
     public set world(world: World) {
         this._world = world;
     }
+
+    /**
+     * 查询器
+     */
+    public query: Query;
 
     /**
      * 系统初始化

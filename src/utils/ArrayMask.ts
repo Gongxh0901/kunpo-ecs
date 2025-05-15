@@ -4,19 +4,24 @@
  * @Description: Uint32Array实现的掩码
  */
 
+import { _ecsdecorator } from "../ECSDecorator";
 import { IMask } from "./IMask";
 
 export class ArrayMask implements IMask {
     /** 32位二进制数组 由于&操作符最大只能30位操作 故每个三十二位二进制保存30个组件 */
     private mask: Uint32Array;
-    private size: number = 0;
+    private length: number = 0;
+    private _size: number = 0;
+
+    public get size(): number {
+        return this._size;
+    }
 
     constructor() {
         // 计算32位掩码数量  (总组件数/31)
-        //TODO::这里是组件总数
-        let length = Math.ceil(72 / 31);
-        this.mask = new Uint32Array(length);
-        this.size = length;
+        let total = _ecsdecorator.getComponentMaps().size;
+        this.length = Math.ceil(total / 31);
+        this.mask = new Uint32Array(this.length);
     }
 
     /**
@@ -26,6 +31,7 @@ export class ArrayMask implements IMask {
     public set(num: number): ArrayMask {
         /// >>> 无符号位移 高位补0
         this.mask[(num / 31) >>> 0] |= 1 << num % 31;
+        this._size++;
         return this;
     }
 
@@ -35,6 +41,7 @@ export class ArrayMask implements IMask {
      */
     public delete(num: number): ArrayMask {
         this.mask[(num / 31) >>> 0] &= ~(1 << num % 31);
+        this._size--;
         return this;
     }
 
@@ -54,7 +61,7 @@ export class ArrayMask implements IMask {
      * @returns 
      */
     public any(other: ArrayMask): boolean {
-        for (let i = 0; i < this.size; i++) {
+        for (let i = 0; i < this.length; i++) {
             if (this.mask[i] & other.mask[i]) {
                 return true;
             }
@@ -68,7 +75,7 @@ export class ArrayMask implements IMask {
      * @returns 
      */
     public include(other: ArrayMask): boolean {
-        for (let i = 0; i < this.size; i++) {
+        for (let i = 0; i < this.length; i++) {
             if ((this.mask[i] & other.mask[i]) != other.mask[i]) {
                 return false;
             }
@@ -77,9 +84,14 @@ export class ArrayMask implements IMask {
     }
 
     public clear(): ArrayMask {
-        for (let i = 0; i < this.size; i++) {
+        for (let i = 0; i < this.length; i++) {
             this.mask[i] = 0;
         }
+        this._size = 0;
         return this;
+    }
+
+    public isEmpty(): boolean {
+        return this._size == 0;
     }
 }

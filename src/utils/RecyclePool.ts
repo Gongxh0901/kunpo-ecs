@@ -88,9 +88,9 @@ export class RecyclePool<T> {
     }
 
     /**
-     * 清空并回收池
+     * 清空回收池
      */
-    public dispose(): void {
+    public clear(): void {
         // 重置所有已创建的对象
         let len = this._capacity;
         for (let i = 0; i < len; i++) {

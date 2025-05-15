@@ -8,6 +8,7 @@ import { World } from "../World";
 export interface ISystem {
     /** 系统名称 */
     name: string;
+
     /** 世界 */
     world: World;
 

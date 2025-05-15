@@ -8,6 +8,11 @@ import { IMask } from "./IMask";
 
 export class BigIntMask implements IMask {
     private mask: bigint = BigInt(0);
+    private _size: number = 0;
+
+    public get size(): number {
+        return this._size;
+    }
 
     /**
      * 设置掩码
@@ -15,6 +20,7 @@ export class BigIntMask implements IMask {
      */
     public set(num: number): IMask {
         this.mask |= BigInt(1) << BigInt(num);
+        this._size++;
         return this;
     }
 
@@ -24,6 +30,7 @@ export class BigIntMask implements IMask {
      */
     public delete(num: number): IMask {
         this.mask &= ~(BigInt(1) << BigInt(num));
+        this._size--;
         return this;
     }
 
@@ -62,6 +69,11 @@ export class BigIntMask implements IMask {
 
     public clear(): IMask {
         this.mask = BigInt(0);
+        this._size = 0;
         return this;
+    }
+
+    public isEmpty(): boolean {
+        return this.size == 0;
     }
 }

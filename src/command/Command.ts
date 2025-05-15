@@ -4,7 +4,7 @@
  * @Description: 
  */
 
-import { Entity } from "../Entity";
+import { Entity } from "../entity/Entity";
 import { ComponentType, IComponent } from "../kunpoecs";
 
 export enum CommandType {

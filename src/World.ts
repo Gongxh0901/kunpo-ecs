@@ -9,19 +9,16 @@ import { CommandPool } from "./command/CommandPool";
 import { ComponentPool } from "./component/ComponentPool";
 import { ComponentType } from "./component/ComponentType";
 import { IComponent } from "./component/IComponent";
-import { Entity } from "./Entity";
+import { Entity } from "./entity/Entity";
+import { EntityPool } from "./entity/EntityPool";
+import { QueryBuilder } from "./query/QueryBuilder";
+import { QueryPool } from "./query/QueryPool";
 import { ISystem } from "./system/ISystem";
 import { SystemGroup } from "./system/SystemGroup";
-import { RecyclePool } from "./utils/RecyclePool";
 
 export class World {
     /** 世界名字 */
     public readonly name: string;
-    /** 
-     * 实体id
-     * @internal
-     */
-    private unique: number = 0;
     /** 
      * 缓冲池
      * @internal
@@ -33,20 +30,25 @@ export class World {
      */
     private componentPool: ComponentPool = null;
     /** 
-     * 实体回收池
+     * 实体池
      * @internal
      */
-    private entityPool: RecyclePool<Entity> = null;
+    private entityPool: EntityPool = null;
     /**
      * 命令池
      * @internal
      */
     private commandPool: CommandPool = null;
     /**
+     * 查询器池
+     * @internal
+     */
+    private queryPool: QueryPool = null;
+    /**
      * 根系统
      * @internal
      */
-    private system: SystemGroup = null;
+    private rootSystem: SystemGroup = null;
 
     /**
      * 创建一个世界
@@ -54,6 +56,9 @@ export class World {
      */
     constructor(name: string) {
         this.name = name;
+        // 初始化根系统
+        this.rootSystem = new SystemGroup("RootSystem");
+        this.rootSystem.world = this;
     }
 
     /**
@@ -61,7 +66,7 @@ export class World {
      * @param system 系统
      */
     public addSystem(system: ISystem): void {
-        this.system.addSystem(system);
+        this.rootSystem.addSystem(system);
     }
 
     /** 
@@ -70,17 +75,22 @@ export class World {
     public initialize(): void {
         // 初始化组件池
         this.componentPool = new ComponentPool();
-        // 初始化实体回收池
-        this.entityPool = new RecyclePool<Entity>(128, () => this.unique++);
+        // 初始化实体池
+        this.entityPool = new EntityPool(this.componentPool);
         // 初始化命令池
-        this.commandPool = new CommandPool(this.componentPool, this.entityPool);
+        this.commandPool = new CommandPool(this.entityPool);
+        // 初始化查询器池
+        this.queryPool = new QueryPool(this.componentPool, this.entityPool, this.commandPool);
+
+        // 系统初始化
+        this.rootSystem.init();
     }
 
     /** 
      * 创建实体 (实体仅包含一个ID)
      */
     public createEntity(): Entity {
-        return this.entityPool.pop();
+        return this.entityPool.createEntity();
     }
 
     /** 
@@ -114,29 +124,40 @@ export class World {
 
     /** 
      * 获取组件
+     * @param entity 实体
+     * @param comp 组件类型
+     * @returns 组件
      */
-    public getComponent<T extends IComponent>(entity: Entity, component: ComponentType<T>): T | undefined {
-        return this.componentPool.getComponent(entity, component);
+    public getComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): T | undefined {
+        return this.entityPool.getComponent(entity, comp);
     }
 
     /**
-     * 更新
+     * 更新世界
+     * @param dt 时间间隔
      */
     public update(dt: number): void {
         // 更新系统
-        this.system.update(dt);
+        this.rootSystem.update(dt);
         // 执行缓冲池中的命令
         this.commandPool.update();
     }
 
     /**
+     * 创建查询构建器
+     * @returns 查询构建器
+     */
+    public QueryBuilder(): QueryBuilder {
+        return new QueryBuilder(this.queryPool);
+    }
+
+    /**
      * 清理整个世界
      */
-    public dispose(): void {
-        this.unique = 0;
+    public clear(): void {
         this.cacheCommands.length = 0;
-        this.componentPool.dispose();
-        this.entityPool.dispose();
-        this.commandPool.dispose();
+        this.componentPool.clear();
+        this.entityPool.clear();
+        this.commandPool.clear();
     }
 }

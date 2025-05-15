@@ -4,6 +4,9 @@
  * @Description: 检测当前环境是否支持BigInt 并提供Mask的接口
  */
 
+import { ArrayMask } from "./ArrayMask";
+import { BigIntMask } from "./BigIntMask";
+
 function isBigIntSupported(): boolean {
     try {
         const a = BigInt(1);
@@ -19,16 +22,23 @@ function isBigIntSupported(): boolean {
 }
 
 // 保存检测结果
-export const BIGINT_SUPPORTED = isBigIntSupported();
+const BIGINT_SUPPORTED = isBigIntSupported();
 
 /**
  * 掩码基类接口
  */
 export interface IMask {
+    size: number;
     set(num: number): IMask;
     delete(num: number): IMask;
     has(num: number): boolean;
     any(other: IMask): boolean;
     include(other: IMask): boolean;
     clear(): IMask;
+    isEmpty(): boolean;
+}
+
+
+export function createMask(): IMask {
+    return BIGINT_SUPPORTED ? new BigIntMask() : new ArrayMask();
 }

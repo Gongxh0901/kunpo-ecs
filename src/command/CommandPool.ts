@@ -4,23 +4,20 @@
  * @Description: 命令缓冲池
  */
 
-import { Command, CommandType } from "./command/Command";
-import { ComponentPool } from "./component/ComponentPool";
-import { Entity } from "./Entity";
-import { ComponentType, IComponent } from "./kunpoecs";
-import { RecyclePool } from "./utils/RecyclePool";
+import { ComponentType } from "../component/ComponentType";
+import { IComponent } from "../component/IComponent";
+import { Entity } from "../entity/Entity";
+import { EntityPool } from "../entity/EntityPool";
+import { RecyclePool } from "../utils/RecyclePool";
+import { Command, CommandType } from "./Command";
+
 
 export class CommandPool {
     /** 
-     * 世界
+     * 实体池的引用
      * @internal
      */
-    private readonly componentPool: ComponentPool;
-    /** 
-     * 实体池
-     * @internal
-     */
-    private readonly entityPool: RecyclePool<Entity>;
+    private readonly entityPool: EntityPool;
     /** 
      * 缓冲命令池
      * @internal
@@ -33,9 +30,9 @@ export class CommandPool {
      */
     private recyclePool: RecyclePool<Command> = null;
 
-    constructor(componentPool: ComponentPool, entityPool: RecyclePool<Entity>) {
-        this.componentPool = componentPool;
+    constructor(entityPool: EntityPool) {
         this.entityPool = entityPool;
+        // 命令回收池
         this.recyclePool = new RecyclePool<Command>(64, () => new Command(), (command) => command.reset());
     }
 
@@ -51,8 +48,6 @@ export class CommandPool {
     }
 
     public update() {
-
-        let componentPool = this.componentPool;
         let entityPool = this.entityPool;
 
         let len = this.pool.length;
@@ -60,22 +55,19 @@ export class CommandPool {
             let command = this.pool[i];
             let entity = command.entity;
             if (command.type === CommandType.Add) {
-                componentPool.addComponent(entity, command.comp, command.component);
+                entityPool.addComponent(entity, command.comp, command.component);
             } else if (command.type === CommandType.RemoveOnly) {
-                if (componentPool.removeComponent(entity, command.comp) && componentPool.isEmptyEntity(entity)) {
-                    // 删除组件后，如果实体为空，则回收实体
-                    entityPool.insert(entity);
-                }
+                entityPool.removeComponent(entity, command.comp);
             } else if (command.type === CommandType.RemoveAll) {
                 // 移除实体对应的所有组件 并回收实体
-                componentPool.removeAllComponents(entity) && entityPool.insert(entity);
+                entityPool.removeEntity(entity)
             }
         }
         this.pool.length = 0;
     }
 
-    public dispose() {
+    public clear() {
         this.pool = [];
-        this.recyclePool.dispose();
+        this.recyclePool.clear();
     }
 }

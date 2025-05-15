@@ -9,7 +9,7 @@ import { ISystem } from "./ISystem";
 
 export class SystemGroup implements ISystem {
     /** 
-     * 世界
+     * 世界引用
      * @internal
      */
     protected _world: World;
@@ -83,6 +83,8 @@ export class SystemGroup implements ISystem {
 
     /**
      * 更新所有启用的子系统
+     * @param deltaTime 时间间隔
+     * @internal
      */
     public update(deltaTime: number): void {
         if (!this.enabled) {
@@ -95,7 +97,8 @@ export class SystemGroup implements ISystem {
     }
 
     /**
-     * 销毁所有子系统
+     * 销毁所有子系统 系统不允许动态删除
+     * @internal
      */
     public dispose(): void {
         let len = this.systems.length;
@@ -107,6 +110,7 @@ export class SystemGroup implements ISystem {
 
     /**
      * 启用/禁用系统组
+     * @param enabled 是否启用
      */
     public setEnabled(enabled: boolean): void {
         this.enabled = enabled;
@@ -114,6 +118,7 @@ export class SystemGroup implements ISystem {
 
     /**
      * 系统是否启用
+     * @returns 是否启用
      */
     public isEnabled(): boolean {
         return this.enabled;
@@ -121,6 +126,7 @@ export class SystemGroup implements ISystem {
 
     /**
      * 获取子系统数量
+     * @returns 子系统数量
      */
     public getSystemCount(): number {
         return this.systems.length;
@@ -128,6 +134,7 @@ export class SystemGroup implements ISystem {
 
     /**
      * 获取所有子系统
+     * @returns 子系统列表
      */
     public getSystems(): ISystem[] {
         return this.systems;

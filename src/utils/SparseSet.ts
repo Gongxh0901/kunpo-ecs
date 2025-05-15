@@ -4,8 +4,8 @@
  * 提供O(1)复杂度的添加、删除和查找操作
  */
 
-import { Entity } from "../Entity";
 import { IComponent } from "../component/IComponent";
+import { Entity } from "../entity/Entity";
 export class SparseSet<T extends IComponent> {
     /**
      * 存储实际组件数据的密集数组
@@ -95,7 +95,7 @@ export class SparseSet<T extends IComponent> {
     }
 
     /**
-     * 获取组件总数
+     * 获取组件总数 也就是实体数量
      * @internal
      */
     public get size(): number {
@@ -112,12 +112,12 @@ export class SparseSet<T extends IComponent> {
         this.sparse.clear();
     }
 
-    // /**
-    //  * 获取所有实体ID
-    //  */
-    // public getEntities(): Entity[] {
-    //     return [...this.entities];
-    // }
+    /**
+     * 获取包含此组件的所有实体
+     */
+    public getEntities(): Entity[] {
+        return this.entities.slice(0, this.size);
+    }
 
     // /**
     //  * 获取所有组件
