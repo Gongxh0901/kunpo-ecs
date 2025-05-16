@@ -9,10 +9,6 @@ import { ComponentPool } from "../component/ComponentPool";
 import { EntityPool } from "../entity/EntityPool";
 import { Query } from "./Query";
 
-/**
- * 查询器池
- * @internal
- */
 export class QueryPool {
     /** 
      * 组件池引用

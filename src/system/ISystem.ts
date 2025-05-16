@@ -23,4 +23,7 @@ export interface ISystem {
 
     /** 获取系统启用/禁用 */
     isEnabled(): boolean;
+
+    /** 获取系统查询器 */
+    clear(): void;
 }

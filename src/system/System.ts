@@ -4,6 +4,8 @@
  * @Description: 系统基类
  */
 
+import { ComponentType } from "../component/ComponentType";
+import { IComponent } from "../component/IComponent";
 import { Query } from "../query/Query";
 import { World } from "../World";
 import { ISystem } from "./ISystem";
@@ -45,14 +47,18 @@ export abstract class System implements ISystem {
      * @internal
      */
     public init(): void {
-        this.query = this.initQuery();
+        let info = this.defineQuery();
+        let includes = info.includes || [];
+        let excludes = info.excludes || [];
+        let optionals = info.optionals || [];
+        this.query = this._world.QueryBuilder.with(...includes).without(...excludes).optional(...optionals).build();
     }
 
     /**
      * 初始化查询器
      * @internal
      */
-    protected abstract initQuery(): Query;
+    protected abstract defineQuery(): { includes?: ComponentType<IComponent>[], excludes?: ComponentType<IComponent>[], optionals?: ComponentType<IComponent>[] };
 
     /**
      * 系统更新
@@ -73,5 +79,13 @@ export abstract class System implements ISystem {
      */
     public isEnabled(): boolean {
         return this.enabled;
+    }
+
+    /**
+     * 清除系统
+     * @internal
+     */
+    public clear(): void {
+        this.enabled = true;
     }
 }

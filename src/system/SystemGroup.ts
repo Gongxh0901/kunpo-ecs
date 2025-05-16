@@ -46,8 +46,36 @@ export class SystemGroup implements ISystem {
      */
     private describe: string = "";
 
-    constructor(describe: string) {
+    /**
+     * 帧间隔
+     * @param frameInterval 帧间隔
+     */
+    private frameInterval: number = 1;
+
+    /**
+     * 帧计数
+     * @internal
+     */
+    private frameCount: number = 0;
+    /**
+     * 帧计时
+     * @internal
+     */
+    private frameTime: number = 0;
+
+    /**
+     * 系统组实例化
+     * @param describe 系统组描述
+     * @param frameInterval 帧间隔 (1=每帧, 2=隔帧, 3=每3帧一次...)
+     */
+    constructor(describe: string, frameInterval: number = 1) {
         this.describe = describe;
+        // 帧间隔最小为1
+        this.frameInterval = Math.max(1, frameInterval);
+        // 帧计数
+        this.frameCount = 0;
+        // 帧计时
+        this.frameTime = 0;
     }
 
     /**
@@ -74,16 +102,23 @@ export class SystemGroup implements ISystem {
 
     /**
      * 更新所有启用的子系统
-     * @param deltaTime 时间间隔
+     * @param dt 时间间隔
      * @internal
      */
-    public update(deltaTime: number): void {
+    public update(dt: number): void {
         if (!this.enabled) {
             return;
         }
-        let len = this.systems.length;
-        for (let i = 0; i < len; i++) {
-            this.systems[i].update(deltaTime);
+        this.frameTime += dt;
+        if (this.frameCount % this.frameInterval === 0) {
+            let len = this.systems.length;
+            for (let i = 0; i < len; i++) {
+                this.systems[i].update(this.frameTime);
+            }
+            this.frameTime = 0;
+            this.frameCount = 1;
+        } else {
+            this.frameCount++;
         }
     }
 
@@ -117,6 +152,19 @@ export class SystemGroup implements ISystem {
      */
     public getSystems(): ISystem[] {
         return this.systems;
+    }
+
+    /**
+     * 清除所有子系统
+     * @internal
+     */
+    public clear(): void {
+        // 帧计数
+        this.frameCount = 0;
+        // 帧计时
+        this.frameTime = 0;
+        // 启用/禁用
+        this.enabled = true;
     }
 
     // /**

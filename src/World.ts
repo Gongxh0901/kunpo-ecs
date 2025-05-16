@@ -150,7 +150,7 @@ export class World {
      * 创建查询构建器
      * @returns 查询构建器
      */
-    public QueryBuilder(): QueryBuilder {
+    public get QueryBuilder(): QueryBuilder {
         return new QueryBuilder(this.queryPool);
     }
 
@@ -162,5 +162,6 @@ export class World {
         this.componentPool.clear();
         this.entityPool.clear();
         this.commandPool.clear();
+        this.rootSystem.clear();
     }
 }
