@@ -4,8 +4,9 @@
  * @Description: 
  */
 
+import { ComponentType } from "../component/ComponentType";
+import { IComponent } from "../component/IComponent";
 import { Entity } from "../entity/Entity";
-import { ComponentType, IComponent } from "../kunpoecs";
 
 export enum CommandType {
     /** 添加一个组件 */
