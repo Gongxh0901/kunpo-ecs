@@ -38,7 +38,10 @@ export interface IMask {
     isEmpty(): boolean;
 }
 
-
+/**
+ * 创建与当前环境兼容的掩码
+ * @returns 掩码实例
+ */
 export function createMask(): IMask {
     return BIGINT_SUPPORTED ? new BigIntMask() : new ArrayMask();
 }

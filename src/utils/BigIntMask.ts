@@ -48,10 +48,7 @@ export class BigIntMask implements IMask {
      * @param other 
      * @returns 
      */
-    public any(other: IMask): boolean {
-        if (!(other instanceof BigIntMask)) {
-            throw new Error("掩码类型不匹配");
-        }
+    public any(other: BigIntMask): boolean {
         return (this.mask & other.mask) !== BigInt(0);
     }
 
@@ -60,14 +57,11 @@ export class BigIntMask implements IMask {
      * @param other 
      * @returns 
      */
-    public include(other: IMask): boolean {
-        if (!(other instanceof BigIntMask)) {
-            throw new Error("掩码类型不匹配");
-        }
+    public include(other: BigIntMask): boolean {
         return (this.mask & other.mask) === other.mask;
     }
 
-    public clear(): IMask {
+    public clear(): BigIntMask {
         this.mask = BigInt(0);
         this._size = 0;
         return this;
