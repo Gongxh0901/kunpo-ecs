@@ -20,20 +20,19 @@ export class World {
     /** 世界名字 */
     public readonly name: string;
     /** 
+     * 组件池
+     */
+    public componentPool: ComponentPool = null;
+    /** 
+     * 实体池
+     */
+    public entityPool: EntityPool = null;
+
+    /** 
      * 缓冲池
      * @internal
      */
     private cacheCommands: Command[] = [];
-    /** 
-     * 组件池
-     * @internal
-     */
-    private componentPool: ComponentPool = null;
-    /** 
-     * 实体池
-     * @internal
-     */
-    private entityPool: EntityPool = null;
     /**
      * 命令池
      * @internal
@@ -162,6 +161,7 @@ export class World {
         this.componentPool.clear();
         this.entityPool.clear();
         this.commandPool.clear();
+        this.queryPool.clearCache();
         this.rootSystem.clear();
     }
 }

@@ -138,7 +138,7 @@ export namespace _ecsdecorator {
     export function ecsystem(name: string, res?: { describe?: string }): Function {
         /** target 类的构造函数 */
         return function (ctor: any): void {
-            ctor.name = name;
+            ctor.cname = name;
         };
     }
 

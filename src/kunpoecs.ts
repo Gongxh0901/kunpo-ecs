@@ -19,6 +19,7 @@ export { QueryBuilder } from './query/QueryBuilder';
 export { QueryPool } from './query/QueryPool';
 
 /** 系统 */
+export { IQueryData } from './system/ISystem';
 export { System } from './system/System';
 export { SystemGroup } from './system/SystemGroup';
 export { SystemType } from './system/SystemType';

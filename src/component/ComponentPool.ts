@@ -33,9 +33,11 @@ export class ComponentPool {
             // 创建稀疏集合
             this.pools.set(type, new SparseSet<IComponent>());
             // 创建组件回收池
-            this.recyclePools.set(type, new RecyclePool<IComponent>(16, () => new ctor(), (component: IComponent) => {
+            let pool = new RecyclePool<IComponent>(16, () => new ctor(), (component: IComponent) => {
                 component.reset();
-            }));
+            });
+            pool.name = `ComponentPool-${ctor.cname}`;
+            this.recyclePools.set(type, pool);
         }
     }
 

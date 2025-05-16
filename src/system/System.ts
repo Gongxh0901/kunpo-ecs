@@ -4,18 +4,15 @@
  * @Description: 系统基类
  */
 
-import { ComponentType } from "../component/ComponentType";
-import { IComponent } from "../component/IComponent";
 import { Query } from "../query/Query";
 import { World } from "../World";
-import { ISystem } from "./ISystem";
+import { IQueryData, ISystem } from "./ISystem";
 
 export abstract class System implements ISystem {
     /** 
      * 世界
-     * @internal
      */
-    protected _world: World;
+    public world: World;
     /** 
      * 是否启用
      * @internal
@@ -30,40 +27,29 @@ export abstract class System implements ISystem {
     }
 
     /**
-     * 设置世界
-     * @param {World} world 世界
-     */
-    public set world(world: World) {
-        this._world = world;
-    }
-
-    /**
      * 查询器
      */
     public query: Query;
 
     /**
      * 系统初始化
-     * @internal
      */
     public init(): void {
         let info = this.defineQuery();
         let includes = info.includes || [];
         let excludes = info.excludes || [];
         let optionals = info.optionals || [];
-        this.query = this._world.QueryBuilder.with(...includes).without(...excludes).optional(...optionals).build();
+        this.query = this.world.QueryBuilder.with(...includes).without(...excludes).optional(...optionals).build();
     }
 
     /**
      * 初始化查询器
-     * @internal
      */
-    protected abstract defineQuery(): { includes?: ComponentType<IComponent>[], excludes?: ComponentType<IComponent>[], optionals?: ComponentType<IComponent>[] };
+    protected abstract defineQuery(): IQueryData;
 
     /**
      * 系统更新
      * @param {number} dt 时间间隔
-     * @internal
      */
     public abstract update(dt: number): void;
 
@@ -83,7 +69,6 @@ export abstract class System implements ISystem {
 
     /**
      * 清除系统
-     * @internal
      */
     public clear(): void {
         this.enabled = true;

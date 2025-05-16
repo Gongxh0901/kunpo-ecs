@@ -75,10 +75,12 @@ export class EntityPool {
 
         // 初始化实体回收池
         this.recyclePool = new RecyclePool<Entity>(128, () => this.unique++);
+        this.recyclePool.name = "EntityPool";
         // 实体掩码回收池
         this.maskRecyclePool = new RecyclePool<IMask>(128, () => createMask(), (mask: IMask) => {
             mask.clear();
         });
+        this.maskRecyclePool.name = "MaskPool";
     }
 
     /** 
@@ -88,31 +90,6 @@ export class EntityPool {
      */
     public createEntity(): Entity {
         return this.recyclePool.pop();
-    }
-
-    /** 
-     * 移除并回收实体id
-     * @param entity 实体
-     */
-    public removeEntity(entity: Entity): void {
-        if (!this.entityMasks.has(entity)) {
-            // 实体不存在
-            console.warn(`entity[${entity}]不存在 删除失败`);
-            return;
-        }
-        // 回收实体id
-        this.recyclePool.insert(entity);
-        // 删除并回收实体掩码
-        this.maskRecyclePool.insert(this.entityMasks.get(entity).clear());
-        // 删除实体掩码
-        this.entityMasks.delete(entity);
-        // 删除实体上的所有组件
-        let componentSet = this.entityComponentSet.get(entity);
-        for (let componentType of componentSet) {
-            this._componentPool.removeComponent(entity, componentType);
-        }
-        // 删除实体组件集合
-        this.entityComponentSet.delete(entity);
     }
 
     /**
@@ -130,11 +107,11 @@ export class EntityPool {
         if (!this.entityMasks.has(entity)) {
             this.entityMasks.set(entity, this.maskRecyclePool.pop().set(componentType));
             this.entityComponentSet.set(entity, new Set<number>().add(componentType));
+            this._size++;
         } else {
             this.entityMasks.get(entity).set(componentType);
             this.entityComponentSet.get(entity).add(componentType);
         }
-        this._size++;
         this._componentPool.addComponent(entity, componentType, component);
     }
 
@@ -155,12 +132,12 @@ export class EntityPool {
             console.warn(`entity[${entity}]上没有组件[${comp.cname}]`);
             return false;
         }
-        this._size--;
         this._componentPool.removeComponent(entity, comp.ctype);
         // 删除组件
         let mask = this.entityMasks.get(entity);
         mask.delete(comp.ctype);
         if (mask.isEmpty()) {
+            this._size--;
             // 回收掩码
             this.maskRecyclePool.insert(mask);
             // 删除实体掩码
@@ -174,6 +151,33 @@ export class EntityPool {
             this.entityComponentSet.get(entity).delete(comp.ctype);
         }
         return true;
+    }
+
+
+    /** 
+     * 移除并回收实体id
+     * @param entity 实体
+     */
+    public removeEntity(entity: Entity): void {
+        if (!this.entityMasks.has(entity)) {
+            // 实体不存在
+            console.warn(`entity[${entity}]不存在 删除失败`);
+            return;
+        }
+        this._size--;
+        // 删除并回收实体掩码
+        this.maskRecyclePool.insert(this.entityMasks.get(entity));
+        // 回收实体id
+        this.recyclePool.insert(entity);
+        // 删除实体掩码
+        this.entityMasks.delete(entity);
+        // 删除实体上的所有组件
+        let componentSet = this.entityComponentSet.get(entity);
+        for (let componentType of componentSet) {
+            this._componentPool.removeComponent(entity, componentType);
+        }
+        // 删除实体组件集合
+        this.entityComponentSet.delete(entity);
     }
 
     /**

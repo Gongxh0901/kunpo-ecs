@@ -3,9 +3,14 @@
  * @Date: 2025-05-14
  * @Description: 通用对象回收池
  * 提供高效的对象复用、内存预分配和自动扩容功能
+ * 
+ * 设置最大容量, 不能超过2048个
  */
 
 export class RecyclePool<T> {
+    /** 回收池名称 */
+    public name: string = "";
+
     /** 存储可复用对象的数组 */
     private pool: T[] = [];
 
@@ -68,10 +73,14 @@ export class RecyclePool<T> {
      * @returns 是否成功归还
      */
     public insert(obj: T): void {
+        if (this._capacity >= 2048) {
+            return;
+        }
         // 池已满，先扩容再归还
         if (this._count >= this._capacity) {
-            this._capacity = Math.ceil(this._capacity * this.expandFactor);
+            this._capacity = Math.min(2048, Math.ceil(this._capacity * this.expandFactor));
             this.pool.length = this._capacity;
+            console.log(`回收池【${this.name}】容量扩容: ${this._capacity}`);
         }
         this.reset(obj);
         this.pool[this._count++] = obj;

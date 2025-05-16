@@ -10,9 +10,8 @@ import { ISystem } from "./ISystem";
 export class SystemGroup implements ISystem {
     /** 
      * 世界引用
-     * @internal
      */
-    protected _world: World;
+    public world: World;
     /** 
      * 是否启用
      * @internal
@@ -24,14 +23,6 @@ export class SystemGroup implements ISystem {
      */
     public get name(): string {
         return this.constructor.name;
-    }
-
-    /**
-     * 设置世界
-     * @param {World} world 世界
-     */
-    public set world(world: World) {
-        this._world = world;
     }
 
     /** 
@@ -80,12 +71,13 @@ export class SystemGroup implements ISystem {
 
     /**
      * 初始化所有子系统
-     * @internal
      */
     public init(): void {
         let len = this.systems.length;
         for (let i = 0; i < len; i++) {
-            this.systems[i].init();
+            let system = this.systems[i];
+            system.world = this.world;
+            system.init();
         }
     }
 
@@ -95,7 +87,6 @@ export class SystemGroup implements ISystem {
      * @returns 系统组
      */
     public addSystem(system: ISystem): this {
-        system.world = this.world;
         this.systems.push(system);
         return this;
     }
@@ -103,7 +94,6 @@ export class SystemGroup implements ISystem {
     /**
      * 更新所有启用的子系统
      * @param dt 时间间隔
-     * @internal
      */
     public update(dt: number): void {
         if (!this.enabled) {
@@ -156,7 +146,6 @@ export class SystemGroup implements ISystem {
 
     /**
      * 清除所有子系统
-     * @internal
      */
     public clear(): void {
         // 帧计数

@@ -18,7 +18,6 @@ export abstract class Component implements IComponent {
 
     /** 
      * 组件销毁时 用来重置数据
-     * @internal
      */
     public abstract reset(): void;
 }

@@ -74,4 +74,10 @@ export class QueryPool {
     private has(key: string): boolean {
         return this.queries.has(key);
     }
+
+    public clearCache(): void {
+        this.queries.forEach((query) => {
+            query.clearCache();
+        });
+    }
 }
