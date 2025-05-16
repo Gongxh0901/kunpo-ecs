@@ -62,8 +62,10 @@ export class QueryPool {
         if (this.has(key)) {
             return this.get(key);
         } else {
-            const query = new Query(this.componentPool, this.entityPool, this.commandPool, includes, excludes, optionals)
+            const query = new Query(this.componentPool, this.entityPool, includes, excludes, optionals)
             this.queries.set(key, query);
+            // 查询器注册到命令缓冲池中
+            this.commandPool.registerQuery(query, includes, excludes);
             return query;
         }
     }

@@ -4,7 +4,6 @@
  * @Description: 查询结果迭代器
  */
 
-import { CommandPool } from "../command/CommandPool";
 import { ComponentPool } from "../component/ComponentPool";
 import { Entity } from "../entity/Entity";
 import { EntityPool } from "../entity/EntityPool";
@@ -24,34 +23,33 @@ export class Query {
      */
     private componentPool: ComponentPool;
 
-    /** 
-     * 命令池
-     * @internal
-     */
-    private commandPool: CommandPool;
-
     /**
      * 必须包含的组件掩码
      * @internal
      */
-    private includeMask: IMask;
-    /** 必须包含的数组 */
-    private includeComponents: number[] = [];
-
+    private _includeMask: IMask;
     /**
      * 必须排除的组件掩码
      * @internal
      */
-    private excludeMask: IMask;
-    /** 必须排除的数组 */
-    private excludeComponents: number[] = [];
+    private _excludeMask: IMask;
 
-    /**
-     * 可选包含的组件掩码
+    /** 
+     * 必须包含的数组
      * @internal
      */
-    private optionalMask: IMask;
-    /** 可选包含的数组 */
+    private includeComponents: number[] = [];
+
+    /** 
+     * 必须排除的数组
+     * @internal
+     */
+    private excludeComponents: number[] = [];
+
+    /** 
+     * 可选组件包含的数组
+     * @internal
+     */
     private optionalComponents: number[] = [];
 
     /**
@@ -64,39 +62,35 @@ export class Query {
      * 脏标记
      * @internal
      */
-    private dirty: boolean = true;
+    private _dirty: boolean = true;
 
-    constructor(componentPool: ComponentPool, entityPool: EntityPool, commandPool: CommandPool, includeComponents: number[], excludeComponents: number[], optionalComponents: number[]) {
+    /**
+     * 设置脏标记
+     */
+    public setDirty(): void {
+        this._dirty = true;
+    }
+
+    constructor(componentPool: ComponentPool, entityPool: EntityPool, includeComponents: number[], excludeComponents: number[], optionalComponents: number[]) {
         this.componentPool = componentPool;
         this.entityPool = entityPool;
-        this.commandPool = commandPool;
 
         this.includeComponents = includeComponents;
         this.excludeComponents = excludeComponents;
         this.optionalComponents = optionalComponents;
 
-        this.includeMask = createMask();
-        this.excludeMask = createMask();
-        this.optionalMask = createMask();
+        this._includeMask = createMask();
+        this._excludeMask = createMask();
 
         let len = includeComponents.length;
         for (let i = 0; i < len; i++) {
-            this.includeMask.set(includeComponents[i]);
+            this._includeMask.set(includeComponents[i]);
         }
 
         len = excludeComponents.length;
         for (let i = 0; i < len; i++) {
-            this.excludeMask.set(excludeComponents[i]);
+            this._excludeMask.set(excludeComponents[i]);
         }
-
-        len = optionalComponents.length;
-        for (let i = 0; i < len; i++) {
-            this.optionalMask.set(optionalComponents[i]);
-        }
-    }
-
-    public setDirty(dirty: boolean): void {
-        this.dirty = dirty;
     }
 
     /**
@@ -104,7 +98,7 @@ export class Query {
      * @returns 满足条件的实体
      */
     public entities(): Iterable<Entity> {
-        if (this.dirty) {
+        if (this._dirty) {
             this.refreshCache();
         }
         return this.cachedEntities;
@@ -113,7 +107,7 @@ export class Query {
     // 重新计算缓存
     private refreshCache(): void {
         // 如果没有必须条件 直接返回
-        if (this.includeMask.isEmpty()) {
+        if (this._includeMask.isEmpty()) {
             return;
         }
         let componentPool = this.componentPool;
@@ -147,13 +141,13 @@ export class Query {
             const entity = entities[i];
             const entityMask = this.entityPool.getMask(entity);
             // 一次性检查所有条件，减少分支预测失败
-            if (entityMask.include(this.includeMask) && !entityMask.any(this.excludeMask)) {
+            if (entityMask.include(this._includeMask) && !entityMask.any(this._excludeMask)) {
                 this.cachedEntities[resultCount++] = entity;
             }
         }
         // 如果结果数量小于预分配空间，裁剪数组
         this.cachedEntities.length = Math.min(resultCount, entities.length);
-        this.dirty = false;
+        this._dirty = false;
     }
 
     /**
@@ -186,7 +180,7 @@ export class Query {
      * @param callback 回调函数
      */
     public iterate<T extends IComponent>(componentType: number, callback: (component: T, entity: Entity) => void): void {
-        if (this.dirty) {
+        if (this._dirty) {
             this.refreshCache();
         }
 
@@ -208,7 +202,7 @@ export class Query {
      * @param callback 回调函数
      */
     public each(callback: (entity: Entity) => void): void {
-        if (this.dirty) {
+        if (this._dirty) {
             this.refreshCache();
         }
         const entities = this.cachedEntities;

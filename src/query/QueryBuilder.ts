@@ -11,7 +11,6 @@ import { QueryPool } from "./QueryPool";
 
 // 示例查询构建器接口
 export class QueryBuilder {
-
     /**
      * 查询器池引用
      * @internal

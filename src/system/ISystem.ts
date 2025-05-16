@@ -18,9 +18,6 @@ export interface ISystem {
     /** 系统更新 */
     update(dt: number): void;
 
-    /** 系统销毁 */
-    dispose(): void;
-
     /** 设置系统启用/禁用 */
     setEnabled(enabled: boolean): void;
 

@@ -42,10 +42,17 @@ export abstract class System implements ISystem {
 
     /**
      * 系统初始化
+     * @internal
      */
     public init(): void {
-
+        this.query = this.initQuery();
     }
+
+    /**
+     * 初始化查询器
+     * @internal
+     */
+    protected abstract initQuery(): Query;
 
     /**
      * 系统更新
@@ -53,13 +60,6 @@ export abstract class System implements ISystem {
      * @internal
      */
     public abstract update(dt: number): void;
-
-    /**
-     * 系统销毁
-     */
-    public dispose(): void {
-
-    }
 
     /**
      * 设置系统启用/禁用

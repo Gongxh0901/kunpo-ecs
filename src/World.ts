@@ -73,6 +73,9 @@ export class World {
      * 世界初始化
      */
     public initialize(): void {
+        if (this.componentPool) {
+            throw new Error("World已经初始化过，请不要重复初始化");
+        }
         // 初始化组件池
         this.componentPool = new ComponentPool();
         // 初始化实体池

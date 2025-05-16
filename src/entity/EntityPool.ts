@@ -210,6 +210,15 @@ export class EntityPool {
     }
 
     /**
+     * 获取实体上的组件集合
+     * @param entity 实体
+     * @returns 组件集合
+     */
+    public getComponents(entity: Entity): Set<number> {
+        return this.entityComponentSet.get(entity) || null;
+    }
+
+    /**
      * 清理实体池
      */
     public clear(): void {

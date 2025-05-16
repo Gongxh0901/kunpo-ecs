@@ -52,6 +52,7 @@ export class SystemGroup implements ISystem {
 
     /**
      * 初始化所有子系统
+     * @internal
      */
     public init(): void {
         let len = this.systems.length;
@@ -62,23 +63,13 @@ export class SystemGroup implements ISystem {
 
     /**
      * 添加子系统或子系统组
+     * @param system 子系统或子系统组
+     * @returns 系统组
      */
     public addSystem(system: ISystem): this {
         system.world = this.world;
         this.systems.push(system);
         return this;
-    }
-
-    /**
-     * 移除子系统或子系统组
-     */
-    public removeSystem(system: ISystem): boolean {
-        const index = this.systems.indexOf(system);
-        if (index !== -1) {
-            this.systems.splice(index, 1);
-            return true;
-        }
-        return false;
     }
 
     /**
@@ -94,18 +85,6 @@ export class SystemGroup implements ISystem {
         for (let i = 0; i < len; i++) {
             this.systems[i].update(deltaTime);
         }
-    }
-
-    /**
-     * 销毁所有子系统 系统不允许动态删除
-     * @internal
-     */
-    public dispose(): void {
-        let len = this.systems.length;
-        for (let i = 0; i < len; i++) {
-            this.systems[i].dispose();
-        }
-        this.systems.length = 0;
     }
 
     /**
