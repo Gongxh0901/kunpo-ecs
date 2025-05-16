@@ -2,6 +2,8 @@
  * @Author: Gongxh
  * @Date: 2025-05-16
  * @Description: 查询器池
+ * 
+ * 事件驱动的查询器， 只处理真正发生变化的实体，不需要遍历整个集合
  */
 
 import { CommandPool } from "../command/CommandPool";
@@ -56,12 +58,12 @@ export class QueryPool {
      */
     public add(key: string, includes: number[], excludes: number[], optionals: number[]): Query {
         if (this.has(key)) {
-            return this.get(key);
+            return this.queries.get(key);
         } else {
             const query = new Query(this.componentPool, this.entityPool, includes, excludes, optionals)
             this.queries.set(key, query);
             // 查询器注册到命令缓冲池中
-            this.commandPool.registerQuery(query, includes, excludes);
+            this.commandPool.registerQuery(query, [...includes, ...excludes, ...optionals]);
             return query;
         }
     }
@@ -75,9 +77,9 @@ export class QueryPool {
         return this.queries.has(key);
     }
 
-    public clearCache(): void {
+    public clear(): void {
         this.queries.forEach((query) => {
-            query.clearCache();
+            query.clear();
         });
     }
 }

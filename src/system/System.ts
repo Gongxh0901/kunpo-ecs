@@ -4,7 +4,7 @@
  * @Description: 系统基类
  */
 
-import { Query } from "../query/Query";
+import { IQueryResult } from "../query/IQuery";
 import { World } from "../World";
 import { IQueryData, ISystem } from "./ISystem";
 
@@ -29,7 +29,7 @@ export abstract class System implements ISystem {
     /**
      * 查询器
      */
-    public query: Query;
+    public query: IQueryResult;
 
     /**
      * 系统初始化

@@ -14,7 +14,7 @@ export { Entity } from './entity/Entity';
 export { EntityPool } from './entity/EntityPool';
 
 /** 查询 */
-export { Query } from './query/Query';
+export { IQueryResult } from './query/IQuery';
 export { QueryBuilder } from './query/QueryBuilder';
 export { QueryPool } from './query/QueryPool';
 

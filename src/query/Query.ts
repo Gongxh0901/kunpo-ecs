@@ -11,98 +11,71 @@ import { IComponent } from "../component/IComponent";
 import { Entity } from "../entity/Entity";
 import { EntityPool } from "../entity/EntityPool";
 import { createMask, IMask } from "../utils/IMask";
+import { IQuery, IQueryEvent, IQueryResult } from "./IQuery";
 
-export class Query {
-    /**
-     * 实体池引用
-     * @internal
-     */
-    private entityPool: EntityPool;
+export class Query implements IQuery, IQueryResult, IQueryEvent {
+    entityPool: EntityPool; // 实体池
+    componentPool: ComponentPool; // 组件池
 
-    /** 
-     * 组件池引用
-     * @internal
-     */
-    private componentPool: ComponentPool;
+    _includeMask: IMask; // 必须包含的组件掩码
+    _excludeMask: IMask; // 必须排除的组件掩码
 
-    /**
-     * 必须包含的组件掩码
-     * @internal
-     */
-    private _includeMask: IMask;
-    /**
-     * 必须排除的组件掩码
-     * @internal
-     */
-    private _excludeMask: IMask;
+    includes: number[] = []; // 必须包含的组件
+    excludes: number[] = []; // 必须排除的组件
+    optionals: number[] = []; // 可选组件
 
-    /** 
-     * 必须包含的数组
-     * @internal
-     */
-    private includeComponents: number[] = [];
+    cachedEntities: Entity[] = [];
+    cachedComponents: IComponent[][] = [];
 
-    /** 
-     * 必须排除的数组
-     * @internal
-     */
-    private excludeComponents: number[] = [];
+    changeEntities: Set<Entity> = new Set();
+    matchEntities: Map<Entity, number> = new Map();
+    needFullRefresh: boolean = false;
 
-    /** 
-     * 可选组件包含的数组
-     * @internal
-     */
-    private optionalComponents: number[] = [];
-
-    /**
-     * 缓存上次查询的结果, 避免每帧重新计算
-     * @internal
-     */
-    private cachedEntities: Entity[] = [];
-
-    /** 
-     * 按实体顺序缓存组件
-     */
-    private cachedComponents: Map<number, IComponent[]> = new Map();
-
-    /**
-     * 脏标记
-     * @internal
-     */
-    private _dirty: boolean = true;
-
-    /**
-     * 设置脏标记
-     */
-    public setDirty(): void {
-        this._dirty = true;
-    }
-
-    constructor(componentPool: ComponentPool, entityPool: EntityPool, includeComponents: number[], excludeComponents: number[], optionalComponents: number[]) {
+    constructor(componentPool: ComponentPool, entityPool: EntityPool, includes: number[], excludes: number[], optionals: number[]) {
         this.componentPool = componentPool;
         this.entityPool = entityPool;
 
-        this.includeComponents = includeComponents;
-        this.excludeComponents = excludeComponents;
-        this.optionalComponents = optionalComponents;
+        this.includes = includes;
+        this.excludes = excludes;
+        this.optionals = optionals;
 
         this._includeMask = createMask();
         this._excludeMask = createMask();
 
-        let len = includeComponents.length;
+        let len = includes.length;
         for (let i = 0; i < len; i++) {
-            this._includeMask.set(includeComponents[i]);
-            this.cachedComponents.set(includeComponents[i], []);
+            this._includeMask.set(includes[i]);
+            this.cachedComponents[includes[i]] = [];
         }
 
-        len = excludeComponents.length;
+        len = excludes.length;
         for (let i = 0; i < len; i++) {
-            this._excludeMask.set(excludeComponents[i]);
+            this._excludeMask.set(excludes[i]);
         }
 
-        len = optionalComponents.length;
+        len = optionals.length;
         for (let i = 0; i < len; i++) {
-            this.cachedComponents.set(optionalComponents[i], []);
+            this.cachedComponents[optionals[i]] = [];
+        }
+    }
+
+    public changeEntity(entity: Entity): void {
+        if (this.needFullRefresh) {
+            return;
+        }
+        this.changeEntities.add(entity);
+    }
+
+    public changeBatchEntities(entities: Set<Entity>): void {
+        if (this.needFullRefresh) {
+            return;
+        }
+        if (entities.size > 1000) {
+            this.needFullRefresh = true;
+        } else {
+            for (const entity of entities) {
+                this.changeEntities.add(entity);
+            }
         }
     }
 
@@ -111,84 +84,87 @@ export class Query {
      * @returns 满足条件的实体
      */
     public entities(): Entity[] {
-        if (this._dirty) {
+        if (this.needFullRefresh) {
+            this.resetCache();
+            this.needFullRefresh = false;
+            this.changeEntities.clear();
+        } else if (this.changeEntities.size > 0) {
             this.refreshCache();
+            this.changeEntities.clear();
         }
         return this.cachedEntities;
     }
 
     public components<T extends Component>(comp: ComponentType<T>): T[] {
-        if (this._dirty) {
+        if (this.needFullRefresh) {
+            this.resetCache();
+            this.needFullRefresh = false;
+            this.changeEntities.clear();
+        } else if (this.changeEntities.size > 0) {
             this.refreshCache();
-            this._dirty = false;
+            this.changeEntities.clear();
         }
-        return this.cachedComponents.get(comp.ctype) as T[];
+        return this.cachedComponents[comp.ctype] as T[];
     }
 
-    // /**
-    //  * 获取特定实体的特定组件
-    //  * @param entity 实体
-    //  * @param comp 组件类型
-    //  * @returns 组件
-    //  */
-    // public getComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): T | null {
-    //     return this.entityPool.getComponent<T>(entity, comp);
-    // }
+    public refreshCache(): void {
+        for (let entity of this.changeEntities.values()) {
+            let entityMask = this.entityPool.getMask(entity);
+            let hasMatch = this.matchEntities.has(entity);
+            if (entityMask && entityMask.include(this._includeMask) && !entityMask.any(this._excludeMask)) {
+                // 直接添加
+                let index = this.cachedEntities.length;
+                if (hasMatch) {
+                    index = this.matchEntities.get(entity);
+                }
+                this.cachedEntities[index] = entity;
+                this.matchEntities.set(entity, index);
+                let len = this.includes.length;
+                for (let i = 0; i < len; i++) {
+                    let list = this.cachedComponents[this.includes[i]];
+                    list[index] = this.componentPool.getComponent(entity, this.includes[i]);
+                }
+                len = this.optionals.length;
+                for (let i = 0; i < len; i++) {
+                    let list = this.cachedComponents[this.optionals[i]];
+                    list[index] = this.componentPool.getComponent(entity, this.optionals[i]);
+                }
+            } else if (hasMatch) {
+                // 实体被删除了, 从缓存中移除
+                let index = this.matchEntities.get(entity);
+                const lastIndex = this.cachedEntities.length - 1;
+                if (index !== lastIndex) {
+                    // 移动最后一个元素到要删除的元素位置
+                    this.cachedEntities[index] = this.cachedEntities[lastIndex];
+                    // 更新索引
+                    this.matchEntities.set(this.cachedEntities[index], index);
+                    // 更新组件位置
+                    let len = this.includes.length;
+                    for (let i = 0; i < len; i++) {
+                        let list = this.cachedComponents[this.includes[i]];
+                        list[index] = list[lastIndex];
+                    }
+                    len = this.optionals.length;
+                    for (let i = 0; i < len; i++) {
+                        let list = this.cachedComponents[this.optionals[i]];
+                        list[index] = list[lastIndex];
+                    }
+                }
+                this.cachedEntities.pop();
+                this.matchEntities.delete(entity);
+                let len = this.includes.length;
+                for (let i = 0; i < len; i++) {
+                    this.cachedComponents[this.includes[i]].pop();
+                }
+                len = this.optionals.length;
+                for (let i = 0; i < len; i++) {
+                    this.cachedComponents[this.optionals[i]].pop();
+                }
+            }
+        }
+    }
 
-    // /**
-    //  * 同时获取多个组件（避免多次查找）
-    //  * @param entity 实体
-    //  * @param comps 组件类型数组
-    //  * @returns 组件
-    //  */
-    // public getComponents(entity: Entity, ...comps: ComponentType<IComponent>[]): IComponent[] {
-    //     let components: IComponent[] = new Array(comps.length);
-    //     for (let i = 0; i < comps.length; i++) {
-    //         components[i] = this.getComponent(entity, comps[i]) || null;
-    //     }
-    //     return components;
-    // }
-
-    // /**
-    //  * 组件直接访问（适用于组件查询模式）
-    //  * @param componentType 组件类型
-    //  * @param callback 回调函数
-    //  */
-    // public iterate<T extends IComponent>(componentType: number, callback: (component: T, entity: Entity) => void): void {
-    //     if (this._dirty) {
-    //         this.refreshCache();
-    //     }
-
-    //     // 直接在内部处理，避免外部迭代
-    //     const entities = this.cachedEntities;
-    //     const len = entities.length;
-
-    //     for (let i = 0; i < len; i++) {
-    //         const entity = entities[i];
-    //         const component = this.componentPool.getComponent(entity, componentType);
-    //         if (component) {
-    //             callback(component as T, entity);
-    //         }
-    //     }
-    // }
-
-    // /**
-    //  * 实体迭代方式 - 高效批量处理
-    //  * @param callback 回调函数
-    //  */
-    // public each(callback: (entity: Entity) => void): void {
-    //     if (this._dirty) {
-    //         this.refreshCache();
-    //     }
-    //     const entities = this.cachedEntities;
-    //     const len = entities.length;
-    //     for (let i = 0; i < len; i++) {
-    //         callback(entities[i]);
-    //     }
-    // }
-
-    // 重新计算缓存
-    private refreshCache(): void {
+    public resetCache(): void {
         // 如果没有必须条件 直接返回
         if (this._includeMask.isEmpty()) {
             this.trimCache(0);
@@ -199,9 +175,9 @@ export class Query {
         // 找出必须包含的组件类型对应的实体最少的组件
         let smallestComponentType: number = -1;
         let smallestSize: number = Infinity;
-        let len = this.includeComponents.length;
+        let len = this.includes.length;
         for (let i = 0; i < len; i++) {
-            let typeId = this.includeComponents[i];
+            let typeId = this.includes[i];
             let size = componentPool.getEntityCount(typeId);
             if (size > 0 && size < smallestSize) {
                 smallestSize = size;
@@ -220,6 +196,10 @@ export class Query {
         // 3. 预分配足够空间，避免动态扩容
         len = entities.length;
         this.cachedEntities.length = len;
+        this.cachedComponents.forEach((components) => {
+            components.length = len;
+        });
+
         let total = 0;
         // 4. 高效遍历和筛选
         for (let i = 0; i < len; i++) {
@@ -228,26 +208,15 @@ export class Query {
             // 一次性检查所有条件，减少分支预测失败
             if (entityMask.include(this._includeMask) && !entityMask.any(this._excludeMask)) {
                 this.cachedEntities[total] = entity;
-
-                // 必须组件
-                let compLength = this.includeComponents.length;
-                for (let j = 0; j < compLength; j++) {
-                    let type = this.includeComponents[j];
-                    const component = componentPool.getComponent(entity, type);
-                    this.cachedComponents.get(type)[total] = component;
-                }
-                // 可选组件
-                compLength = this.optionalComponents.length;
-                for (let j = 0; j < compLength; j++) {
-                    let type = this.optionalComponents[j];
-                    const component = componentPool.getComponent(entity, type);
-                    this.cachedComponents.get(type)[total] = component;
-                }
+                // 批量获取必须组件
+                componentPool.getComponentBatch(entity, this.includes, this.cachedComponents, total);
+                // 批量获取可选组件
+                componentPool.getComponentBatch(entity, this.optionals, this.cachedComponents, total);
                 total++;
             }
         }
         // 如果结果数量小于预分配空间，裁剪数组
-        this.trimCache(Math.min(total, entities.length));
+        this.trimCache(total);
     }
 
     /**
@@ -255,16 +224,33 @@ export class Query {
      */
     private trimCache(length: number): void {
         this.cachedEntities.length = length;
-        this.cachedComponents.forEach((components) => {
-            components.length = length;
-        });
+        let len = this.includes.length;
+        for (let i = 0; i < len; i++) {
+            this.cachedComponents[this.includes[i]].length = length;
+        }
+        len = this.optionals.length;
+        for (let i = 0; i < len; i++) {
+            this.cachedComponents[this.optionals[i]].length = length;
+        }
+        // 重建实体的索引
+        this.matchEntities.clear();
+        for (let i = 0; i < length; i++) {
+            this.matchEntities.set(this.cachedEntities[i], i);
+        }
     }
 
+    public clear(): void {
+        this.cachedEntities = [];
+        this.changeEntities.clear();
+        this.matchEntities.clear();
 
-    public clearCache(): void {
-        this.cachedEntities.length = 0;
-        this.cachedComponents.forEach((components) => {
-            components.length = 0;
-        });
+        let len = this.includes.length;
+        for (let i = 0; i < len; i++) {
+            this.cachedComponents[this.includes[i]] = [];
+        }
+        len = this.optionals.length;
+        for (let i = 0; i < len; i++) {
+            this.cachedComponents[this.optionals[i]] = [];
+        }
     }
 }

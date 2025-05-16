@@ -33,9 +33,7 @@ export class ComponentPool {
             // 创建稀疏集合
             this.pools.set(type, new SparseSet<IComponent>());
             // 创建组件回收池
-            let pool = new RecyclePool<IComponent>(16, () => new ctor(), (component: IComponent) => {
-                component.reset();
-            });
+            let pool = new RecyclePool<IComponent>(() => new ctor(), component => component.reset(), 16);
             pool.name = `ComponentPool-${ctor.cname}`;
             this.recyclePools.set(type, pool);
         }
@@ -82,7 +80,19 @@ export class ComponentPool {
      * @internal
      */
     public getComponent<T extends IComponent>(entity: Entity, componentType: number): T | undefined {
-        return (this.pools.get(componentType) as SparseSet<T>).get(entity) as T;
+        return (this.pools.get(componentType)).get(entity) as T;
+    }
+
+    /**
+     * 获取实体的多个组件 (专门给查询器用的)
+     * @param entity 实体
+     * @param componentTypes 组件类型
+     * @internal
+     */
+    public getComponentBatch(entity: Entity, componentTypes: number[], out: IComponent[][], index: number): void {
+        for (let type of componentTypes) {
+            out[type][index] = this.getComponent(entity, type);
+        }
     }
 
     /**

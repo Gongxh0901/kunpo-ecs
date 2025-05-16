@@ -139,10 +139,10 @@ export class World {
      * @param dt 时间间隔
      */
     public update(dt: number): void {
-        // 更新系统
-        this.rootSystem.update(dt);
         // 执行缓冲池中的命令
         this.commandPool.update();
+        // 更新系统
+        this.rootSystem.update(dt);
     }
 
     /**
@@ -161,7 +161,7 @@ export class World {
         this.componentPool.clear();
         this.entityPool.clear();
         this.commandPool.clear();
-        this.queryPool.clearCache();
+        this.queryPool.clear();
         this.rootSystem.clear();
     }
 }

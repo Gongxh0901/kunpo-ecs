@@ -8,22 +8,25 @@ import { IComponent } from "../component/IComponent";
 import { Entity } from "../entity/Entity";
 export class SparseSet<T extends IComponent> {
     /**
-     * 存储实际组件数据的密集数组
+     * 存储实际组件数据的数组
      * @internal
      */
     private dense: T[] = [];
 
     /**
-     * 实体到密集数组索引的映射 (实体 -> 数组索引)
+     * 实体到数组索引的映射 (实体 -> 数组索引)
      * @internal
      */
-    private readonly sparse: Map<Entity, number> = new Map();
+    private readonly entityToIndex: Map<Entity, number> = new Map();
 
     /**
-     * 密集数组索引实体的反向映射 (数组索引 -> 实体)
+     * 索引到实体的反向
      * @internal
      */
     private entities: Entity[] = [];
+
+    /** 热路径LRU缓存 @internal */
+    // private cache: LRUCache<Entity, number> = new LRUCache(256);
 
     /**
      * 添加或更新组件
@@ -36,9 +39,10 @@ export class SparseSet<T extends IComponent> {
         const index = this.dense.length;
         this.dense.push(component);
         this.entities.push(entity);
-
         // 更新映射
-        this.sparse.set(entity, index);
+        this.entityToIndex.set(entity, index);
+        // 更新缓存
+        // this.cache.put(entity, index);
     }
 
     /**
@@ -48,27 +52,27 @@ export class SparseSet<T extends IComponent> {
      * @internal
      */
     public remove(entity: Entity): T {
-        const index = this.sparse.get(entity)!;
+        const index = this.entityToIndex.get(entity)!;
         const lastIndex = this.dense.length - 1;
 
         // 如果不是最后一个元素，用最后一个元素替换被删除的元素
         if (index !== lastIndex) {
-            // 移动最后一个元素到当前位置
-            this.dense[index] = this.dense[lastIndex];
             const lastEntity = this.entities[lastIndex];
+            // 移动最后一个元素到要删除的元素位置
+            this.dense[index] = this.dense[lastIndex];
             this.entities[index] = lastEntity;
-
             // 更新最后一个元素的映射
-            this.sparse.set(lastEntity, index);
+            this.entityToIndex.set(lastEntity, index);
+            // 更新缓存
+            // this.cache.put(lastEntity, index);
         }
 
         // 移除最后一个元素
-        let component = this.dense.pop();
         this.entities.pop();
-
-        // 删除映射
-        this.sparse.delete(entity);
-        return component;
+        // 清理映射和缓存
+        this.entityToIndex.delete(entity);
+        // this.cache.delete(entity);
+        return this.dense.pop();
     }
 
     /**
@@ -78,8 +82,15 @@ export class SparseSet<T extends IComponent> {
      * @internal
      */
     public get(entity: Entity): T {
-        const index = this.sparse.get(entity)!;
-        return this.dense[index];
+        // // 1. 现充缓存中查找
+        // let index = this.cache.get(entity);
+        // // 2. 缓存未命中
+        // if (index === undefined) {
+        //     index = this.entityToIndex.get(entity);
+        //     // 更新缓存
+        //     this.cache.put(entity, index);
+        // }
+        return this.dense[this.entityToIndex.get(entity)];
     }
 
     /**
@@ -109,22 +120,23 @@ export class SparseSet<T extends IComponent> {
     public dispose(): void {
         this.dense = [];
         this.entities = [];
-        this.sparse.clear();
+        this.entityToIndex.clear();
+        // this.cache.clear();
     }
 
     /**
      * 获取包含此组件的所有实体
      */
     public getEntities(): Entity[] {
-        return this.entities.slice(0, this.size);
+        return this.entities;
     }
 
-    // /**
-    //  * 获取所有组件
-    //  */
-    // public getComponents(): T[] {
-    //     return [...this.dense];
-    // }
+    /**
+     * 获取所有组件
+     */
+    public getComponents(): T[] {
+        return this.dense;
+    }
 
     // /**
     //  * 实现迭代器接口，支持for...of循环

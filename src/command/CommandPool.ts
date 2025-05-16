@@ -8,7 +8,7 @@ import { ComponentType } from "../component/ComponentType";
 import { IComponent } from "../component/IComponent";
 import { Entity } from "../entity/Entity";
 import { EntityPool } from "../entity/EntityPool";
-import { Query } from "../query/Query";
+import { IQueryEvent } from "../query/IQuery";
 import { RecyclePool } from "../utils/RecyclePool";
 import { Command, CommandType } from "./Command";
 
@@ -35,18 +35,15 @@ export class CommandPool {
      * 查询器池的引用
      * @internal
      */
-    private readonly componentTypeQuerys: Map<number, Query[]> = new Map();
+    private readonly componentTypeQuerys: Map<number, IQueryEvent[]> = new Map();
 
-    /** 
-     * 变化的组件类型 
-     * @internal
-     */
-    private _changedTypes: Set<number> = new Set();
+    /** 临时存储查询器与实体的变更关联 */
+    private queryEntityChanges: Map<IQueryEvent, Set<Entity>> = new Map();
 
     constructor(entityPool: EntityPool) {
         this.entityPool = entityPool;
         // 命令回收池
-        this.recyclePool = new RecyclePool<Command>(64, () => new Command(), (command) => command.reset());
+        this.recyclePool = new RecyclePool<Command>(() => new Command(), command => command.reset(), 64);
         this.recyclePool.name = "CommandPool";
     }
 
@@ -56,22 +53,10 @@ export class CommandPool {
      * @param includes 必须包含的组件类型
      * @param excludes 必须排除的组件类型
      */
-    public registerQuery(query: Query, includes: number[], excludes: number[]) {
-        let len = includes.length;
+    public registerQuery(query: IQueryEvent, components: number[]) {
+        let len = components.length;
         for (let i = 0; i < len; i++) {
-            let type = includes[i];
-            let queries = this.componentTypeQuerys.get(type);
-            if (!queries) {
-                queries = [query];
-                this.componentTypeQuerys.set(type, queries);
-            } else {
-                queries.push(query);
-            }
-        }
-
-        len = excludes.length;
-        for (let i = 0; i < len; i++) {
-            let type = excludes[i];
+            let type = components[i];
             let queries = this.componentTypeQuerys.get(type);
             if (!queries) {
                 queries = [query];
@@ -95,42 +80,59 @@ export class CommandPool {
 
     public update() {
         let entityPool = this.entityPool;
-
         let len = this.pool.length;
+        if (len === 0) {
+            return;
+        }
+        // 看命令数量是否需要批量处理
+        const needBatch = len > 1000;
+        const allReset = len > 10000;
         for (let i = 0; i < len; i++) {
             let command = this.pool[i];
             let entity = command.entity;
             if (command.type === CommandType.Add) {
-                this._changedTypes.add(command.comp.ctype);
+                this.addChangedType(command.comp.ctype, entity, needBatch, allReset);
                 entityPool.addComponent(entity, command.comp, command.component);
             } else if (command.type === CommandType.RemoveOnly) {
-                this._changedTypes.add(command.comp.ctype);
+                this.addChangedType(command.comp.ctype, entity, needBatch, allReset);
                 entityPool.removeComponent(entity, command.comp);
             } else if (command.type === CommandType.RemoveAll) {
-                entityPool.getComponents(entity)?.forEach(componentType => this._changedTypes.add(componentType));
+                entityPool.getComponents(entity)?.forEach(componentType => this.addChangedType(componentType, entity, needBatch, allReset));
                 // 移除实体对应的所有组件 并回收实体
                 entityPool.removeEntity(entity)
             }
         }
         this.pool.length = 0;
 
-        // 标记查询器
-        for (let type of this._changedTypes.values()) {
-            this.modifyQueryDirtyByComponentType(type);
+        // 批量处理查询器
+        if (needBatch) {
+            this.queryEntityChanges.forEach((entities, query) => {
+                query.changeBatchEntities(entities);
+                entities.clear();
+            });
+            this.queryEntityChanges.clear();
         }
-        this._changedTypes.clear();
     }
 
-    /**
-     * 根据组件类型修改查询器脏标记
-     * @param componentType 组件类型
-     */
-    private modifyQueryDirtyByComponentType(componentType: number) {
+    private addChangedType(componentType: number, entity: Entity, needBatch: boolean, allReset: boolean) {
         let queries = this.componentTypeQuerys.get(componentType);
-        if (queries) {
-            let len = queries.length;
-            for (let i = 0; i < len; i++) {
-                queries[i].setDirty();
+        if (!queries) {
+            return;
+        }
+        let len = queries.length;
+        for (let i = 0; i < len; i++) {
+            const query = queries[i];
+            if (allReset) {
+                query.needFullRefresh = true;
+            } else if (needBatch) {
+                let entitySet = this.queryEntityChanges.get(query);
+                if (!entitySet) {
+                    entitySet = new Set<Entity>();
+                    this.queryEntityChanges.set(query, entitySet);
+                }
+                entitySet.add(entity);
+            } else {
+                query.changeEntity(entity);
             }
         }
     }
@@ -138,5 +140,6 @@ export class CommandPool {
     public clear() {
         this.pool = [];
         this.recyclePool.clear();
+        this.queryEntityChanges.clear();
     }
 }
