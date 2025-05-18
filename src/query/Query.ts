@@ -119,16 +119,8 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
                 }
                 this.cachedEntities[index] = entity;
                 this.matchEntities.set(entity, index);
-                let len = this.includes.length;
-                for (let i = 0; i < len; i++) {
-                    let list = this.cachedComponents[this.includes[i]];
-                    list[index] = this.componentPool.getComponent(entity, this.includes[i]);
-                }
-                len = this.optionals.length;
-                for (let i = 0; i < len; i++) {
-                    let list = this.cachedComponents[this.optionals[i]];
-                    list[index] = this.componentPool.getComponent(entity, this.optionals[i]);
-                }
+                this.componentPool.getComponentBatch(entity, this.includes, this.cachedComponents, index);
+                this.componentPool.getComponentBatch(entity, this.optionals, this.cachedComponents, index);
             } else if (hasMatch) {
                 // 实体被删除了, 从缓存中移除
                 let index = this.matchEntities.get(entity);

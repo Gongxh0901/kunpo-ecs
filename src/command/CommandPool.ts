@@ -85,7 +85,7 @@ export class CommandPool {
             return;
         }
         // 看命令数量是否需要批量处理
-        const needBatch = len > 1000;
+        const needBatch = len > 500;
         const allReset = len > 10000;
         for (let i = 0; i < len; i++) {
             let command = this.pool[i];
@@ -97,7 +97,13 @@ export class CommandPool {
                 this.addChangedType(command.comp.ctype, entity, needBatch, allReset);
                 entityPool.removeComponent(entity, command.comp);
             } else if (command.type === CommandType.RemoveAll) {
-                entityPool.getComponents(entity)?.forEach(componentType => this.addChangedType(componentType, entity, needBatch, allReset));
+                let components = entityPool.getComponents(entity);
+                if (components) {
+                    let len = components.length;
+                    for (let i = 0; i < len; i++) {
+                        this.addChangedType(components[i], entity, needBatch, allReset);
+                    }
+                }
                 // 移除实体对应的所有组件 并回收实体
                 entityPool.removeEntity(entity)
             }

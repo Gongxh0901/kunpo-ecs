@@ -32,7 +32,7 @@ export class EntityPool {
      * 实体上的组件集合 实体 -> 组件集合
      * @internal
      */
-    private readonly entityComponentSet: Map<Entity, Set<number>> = new Map();
+    private readonly entityComponentSet: Map<Entity, number[]> = new Map();
     /** 
      * 实体回收池
      * @internal
@@ -104,11 +104,11 @@ export class EntityPool {
         let componentType = comp.ctype;
         if (!this.entityMasks.has(entity)) {
             this.entityMasks.set(entity, this.maskRecyclePool.pop().set(componentType));
-            this.entityComponentSet.set(entity, new Set<number>().add(componentType));
+            this.entityComponentSet.set(entity, [componentType]);
             this._size++;
         } else {
             this.entityMasks.get(entity).set(componentType);
-            this.entityComponentSet.get(entity).add(componentType);
+            this.entityComponentSet.get(entity).push(componentType);
         }
         this._componentPool.addComponent(entity, componentType, component);
     }
@@ -146,7 +146,9 @@ export class EntityPool {
             this.entityComponentSet.delete(entity);
         } else {
             // 更新组件集合
-            this.entityComponentSet.get(entity).delete(comp.ctype);
+            let components = this.entityComponentSet.get(entity);
+            let index = components.indexOf(comp.ctype);
+            components.splice(index, 1);
         }
         return true;
     }
@@ -216,7 +218,7 @@ export class EntityPool {
      * @param entity 实体
      * @returns 组件集合
      */
-    public getComponents(entity: Entity): Set<number> {
+    public getComponents(entity: Entity): number[] {
         return this.entityComponentSet.get(entity) || null;
     }
 
