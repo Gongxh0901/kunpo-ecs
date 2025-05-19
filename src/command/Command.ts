@@ -11,6 +11,8 @@ import { Entity } from "../entity/Entity";
 export enum CommandType {
     /** 添加一个组件 */
     Add = 1,
+    /** 批量添加组件 */
+    AddBatch,
     /** 移除一个组件 */
     RemoveOnly,
     /** 移除实体上所有组件 */
@@ -23,6 +25,9 @@ interface ICommand {
     entity: Entity;
     comp?: ComponentType<IComponent>;
     component?: IComponent;
+
+    comps?: ComponentType<IComponent>[];
+    components?: IComponent[];
 }
 
 export class Command implements ICommand {
@@ -34,6 +39,9 @@ export class Command implements ICommand {
     comp?: ComponentType<IComponent>;
     /** 组件 */
     component?: IComponent;
+
+    comps?: ComponentType<IComponent>[];
+    components?: IComponent[];
 
     /**
      * 设置命令
@@ -47,6 +55,14 @@ export class Command implements ICommand {
         this.entity = entity;
         this.comp = comp;
         this.component = component;
+        return this;
+    }
+
+    public setBatch(type: CommandType, entity: Entity, comps: ComponentType<IComponent>[], components: IComponent[]): Command {
+        this.type = type;
+        this.entity = entity;
+        this.comps = comps;
+        this.components = components;
         return this;
     }
 

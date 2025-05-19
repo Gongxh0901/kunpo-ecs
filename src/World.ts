@@ -6,9 +6,11 @@
 
 import { Command, CommandType } from "./command/Command";
 import { CommandPool } from "./command/CommandPool";
+import { Component } from "./component/Component";
 import { ComponentPool } from "./component/ComponentPool";
 import { ComponentType } from "./component/ComponentType";
 import { IComponent } from "./component/IComponent";
+import { Data } from "./Data";
 import { Entity } from "./entity/Entity";
 import { EntityPool } from "./entity/EntityPool";
 import { QueryBuilder } from "./query/QueryBuilder";
@@ -86,12 +88,22 @@ export class World {
 
         // 系统初始化
         this.rootSystem.init();
+
+        // 初始化数据
+        Data.init();
+    }
+
+    /** 通过配置数据创建实体 */
+    public createEntity(entityName: string): { entity: Entity, components: Record<string, Component> } {
+        const entity = this.entityPool.createEntity();
+        const entityConfig = Data.getEntityConfig(entityName);
+        return this.addComponents(entity, entityConfig);
     }
 
     /** 
-     * 创建实体 (实体仅包含一个ID)
+     * 创建一个空实体 (实体仅包含一个ID)
      */
-    public createEntity(): Entity {
+    public createEmptyEntity(): Entity {
         return this.entityPool.createEntity();
     }
 
@@ -113,6 +125,24 @@ export class World {
         let component = this.componentPool.createComponent(comp);
         this.commandPool.addCommand(CommandType.Add, entity, comp, component);
         return component;
+    }
+
+    public addComponents(entity: Entity, infos: { name: string, props: Record<string, any> }[]): { entity: Entity, components: Record<string, Component> } {
+        let comps: ComponentType<Component>[] = [];
+        let components: Component[] = [];
+        let result = { entity, components: {} as Record<string, Component> };
+        for (const { name, props } of infos) {
+            const comp = Data.getComponentType(name);
+            let component = this.componentPool.createComponent(comp);
+            comps.push(comp);
+            components.push(component);
+            for (const key in props) {
+                (component as any)[key] = props[key];
+            }
+            result.components[name] = component;
+        }
+        this.commandPool.addCommand(CommandType.AddBatch, entity, comps, components);
+        return result;
     }
 
     /** 

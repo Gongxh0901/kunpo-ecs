@@ -94,6 +94,7 @@ export class EntityPool {
      * 给实体添加组件
      * @param entity 实体
      * @param comp 组件类型
+     * @param component 组件
      * @internal
      */
     public addComponent(entity: Entity, comp: ComponentType<IComponent>, component: IComponent): void {
@@ -114,6 +115,36 @@ export class EntityPool {
     }
 
     /**
+     * 给实体批量添加组件
+     * @param entity 实体
+     * @param comps 组件类型
+     * @param components 组件
+     * @internal
+     */
+    public addComponents(entity: Entity, comps: ComponentType<IComponent>[], components: IComponent[]): void {
+        let len = comps.length;
+        for (let i = 0; i < len; i++) {
+            let comp = comps[i];
+            let component = components[i];
+            if (this.hasComponent(entity, comp.ctype)) {
+                console.warn(`entity[${entity}]已经拥有组件[${comp.cname}]`);
+                return;
+            }
+            let componentType = comp.ctype;
+            if (!this.entityMasks.has(entity)) {
+                this.entityMasks.set(entity, this.maskRecyclePool.pop().set(componentType));
+                this.entityComponentSet.set(entity, [componentType]);
+                this._size++;
+            } else {
+                this.entityMasks.get(entity).set(componentType);
+                this.entityComponentSet.get(entity).push(componentType);
+            }
+            this._componentPool.addComponent(entity, componentType, component);
+        }
+    }
+
+
+    /**
      * 删除实体的组件
      * @param entity 实体
      * @param comp 组件类型
@@ -126,7 +157,7 @@ export class EntityPool {
             return false;
         }
         // 实体上没有组件
-        if (this.hasComponent(entity, comp.ctype)) {
+        if (!this.hasComponent(entity, comp.ctype)) {
             console.warn(`entity[${entity}]上没有组件[${comp.cname}]`);
             return false;
         }
@@ -188,7 +219,7 @@ export class EntityPool {
      */
     public getComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): T {
         if (!this.hasComponent(entity, comp.ctype)) {
-            console.warn(`entity[${entity}]上没有组件[${comp.cname}]`);
+            console.warn(`获取组件[${comp.cname}]失败 entity[${entity}]上没有该组件`);
             return null;
         }
         return this._componentPool.getComponent(entity, comp.ctype) as T;

@@ -74,8 +74,12 @@ export class CommandPool {
      * @param comp 组件类型
      * @param component 组件
      */
-    public addCommand(type: CommandType, entity: Entity, comp?: ComponentType<IComponent>, component?: IComponent) {
-        this.pool.push(this.recyclePool.pop().set(type, entity, comp, component));
+    public addCommand(type: CommandType, entity: Entity, comp?: ComponentType<IComponent> | ComponentType<IComponent>[], component?: IComponent | IComponent[]) {
+        if (type === CommandType.AddBatch) {
+            this.pool.push(this.recyclePool.pop().setBatch(type, entity, comp as ComponentType<IComponent>[], component as IComponent[]));
+        } else {
+            this.pool.push(this.recyclePool.pop().set(type, entity, comp as ComponentType<IComponent>, component as IComponent));
+        }
     }
 
     public update() {
@@ -85,14 +89,21 @@ export class CommandPool {
             return;
         }
         // 看命令数量是否需要批量处理
-        const needBatch = len > 500;
-        const allReset = len > 10000;
+        const needBatch = len > 200;
+        const allReset = len > 2000;
         for (let i = 0; i < len; i++) {
             let command = this.pool[i];
             let entity = command.entity;
             if (command.type === CommandType.Add) {
                 this.addChangedType(command.comp.ctype, entity, needBatch, allReset);
                 entityPool.addComponent(entity, command.comp, command.component);
+            } else if (command.type === CommandType.AddBatch) {
+                let comps = command.comps;
+                let components = command.components;
+
+                this.addChangedTypes(comps, entity, needBatch, allReset);
+                entityPool.addComponents(entity, comps, components);
+
             } else if (command.type === CommandType.RemoveOnly) {
                 this.addChangedType(command.comp.ctype, entity, needBatch, allReset);
                 entityPool.removeComponent(entity, command.comp);
@@ -139,6 +150,32 @@ export class CommandPool {
                 entitySet.add(entity);
             } else {
                 query.changeEntity(entity);
+            }
+        }
+    }
+
+    private addChangedTypes(comps: ComponentType<IComponent>[], entity: Entity, needBatch: boolean, allReset: boolean) {
+        for (let i = 0; i < comps.length; i++) {
+            let comp = comps[i];
+            let queries = this.componentTypeQuerys.get(comp.ctype);
+            if (!queries) {
+                return;
+            }
+            let len = queries.length;
+            for (let i = 0; i < len; i++) {
+                const query = queries[i];
+                if (allReset) {
+                    query.needFullRefresh = true;
+                } else if (needBatch) {
+                    let entitySet = this.queryEntityChanges.get(query);
+                    if (!entitySet) {
+                        entitySet = new Set<Entity>();
+                        this.queryEntityChanges.set(query, entitySet);
+                    }
+                    entitySet.add(entity);
+                } else {
+                    query.changeEntity(entity);
+                }
             }
         }
     }

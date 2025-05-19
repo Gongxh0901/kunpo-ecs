@@ -33,5 +33,8 @@ export { SparseSet } from './utils/SparseSet';
 /** 世界 */
 export { World } from './World';
 
+/** 配置 */
+export { Data } from './Data';
+
 /** 装饰器 */
 export { _ecsdecorator } from './ECSDecorator';
