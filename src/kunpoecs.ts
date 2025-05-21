@@ -27,8 +27,8 @@ export { SystemType } from './system/SystemType';
 /** 工具 */
 export { ArrayMask } from './utils/ArrayMask';
 export { BigIntMask } from './utils/BigIntMask';
+export { DenseSet } from './utils/DenseSet';
 export { RecyclePool } from './utils/RecyclePool';
-export { SparseSet } from './utils/SparseSet';
 
 /** 世界 */
 export { World } from './World';

@@ -31,10 +31,7 @@ export class CommandPool {
      */
     private recyclePool: RecyclePool<Command> = null;
 
-    /**
-     * 查询器池的引用
-     * @internal
-     */
+    /** 根据组件类型可以找到所有关心该组件的查询器 */
     private readonly componentTypeQuerys: Map<number, IQueryEvent[]> = new Map();
 
     /** 临时存储查询器与实体的变更关联 */
@@ -50,8 +47,7 @@ export class CommandPool {
     /**
      * 注册查询器
      * @param query 查询器
-     * @param includes 必须包含的组件类型
-     * @param excludes 必须排除的组件类型
+     * @param components 查询器关心的组件类型数组
      */
     public registerQuery(query: IQueryEvent, components: number[]) {
         let len = components.length;
