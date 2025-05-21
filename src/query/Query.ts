@@ -64,19 +64,33 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
             return;
         }
         this.changeEntities.add(entity);
+        if (this.changeEntities.size > 500) {
+            this.needFullRefresh = true;
+        }
     }
 
-    public changeBatchEntities(entities: Set<Entity>): void {
+    public batchChangeEntities(entities: Entity[]): void {
         if (this.needFullRefresh) {
             return;
         }
-        if (entities.size > 1000) {
+        if (this.changeEntities.size + entities.length > 500) {
             this.needFullRefresh = true;
-        } else {
-            for (const entity of entities) {
-                this.changeEntities.add(entity);
-            }
+            return;
         }
+        for (let i = 0; i < entities.length; i++) {
+            this.changeEntities.add(entities[i]);
+        }
+
+        // if (this.needFullRefresh) {
+        //     return;
+        // }
+        // if (entities.size > 1000) {
+        //     this.needFullRefresh = true;
+        // } else {
+        //     for (const entity of entities) {
+        //         this.changeEntities.add(entity);
+        //     }
+        // }
     }
 
     /**

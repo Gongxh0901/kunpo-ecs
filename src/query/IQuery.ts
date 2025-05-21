@@ -36,7 +36,7 @@ export interface IQueryEvent {
     /** 变化的实体 */
     changeEntity(entity: Entity): void;
     /** 变化的实体集合 */
-    changeBatchEntities(entities: Set<Entity>): void;
+    batchChangeEntities(entities: Entity[]): void;
     /** 根据变化刷新缓存 */
     refreshCache(): void;
     /** 全量刷新 */

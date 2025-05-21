@@ -4,7 +4,6 @@
 import { _ecsdecorator } from '../ECSDecorator';
 import { Entity } from '../entity/Entity';
 import { DenseSet } from '../utils/DenseSet';
-import { ComponentType } from './ComponentType';
 import { IComponent } from './IComponent';
 
 export class ComponentPool {
@@ -30,12 +29,12 @@ export class ComponentPool {
 
     /**
      * 创建组件
-     * @param component 组件类型
+     * @param componentType 组件类型
      * @returns 组件实例
      * @internal
      */
-    public createComponent<T extends IComponent>(component: ComponentType<T>): T {
-        return this.pools[component.ctype].create() as T;
+    public createComponent<T extends IComponent>(componentType: number): T {
+        return this.pools[componentType].create() as T;
     }
 
     /**

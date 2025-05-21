@@ -4,13 +4,13 @@
  * @Description: 
  */
 
-import { Command, CommandType } from "./command/Command";
 import { CommandPool } from "./command/CommandPool";
 import { Component } from "./component/Component";
 import { ComponentPool } from "./component/ComponentPool";
 import { ComponentType } from "./component/ComponentType";
 import { IComponent } from "./component/IComponent";
 import { Data } from "./Data";
+import { _ecsdecorator } from "./ECSDecorator";
 import { Entity } from "./entity/Entity";
 import { EntityPool } from "./entity/EntityPool";
 import { QueryBuilder } from "./query/QueryBuilder";
@@ -29,12 +29,6 @@ export class World {
      * 实体池
      */
     public entityPool: EntityPool = null;
-
-    /** 
-     * 缓冲池
-     * @internal
-     */
-    private cacheCommands: Command[] = [];
     /**
      * 命令池
      * @internal
@@ -82,22 +76,23 @@ export class World {
         // 初始化实体池
         this.entityPool = new EntityPool(this.componentPool);
         // 初始化命令池
-        this.commandPool = new CommandPool(this.entityPool);
+        this.commandPool = new CommandPool(this.entityPool, this.componentPool);
         // 初始化查询器池
         this.queryPool = new QueryPool(this.componentPool, this.entityPool, this.commandPool);
 
         // 系统初始化
         this.rootSystem.init();
-
-        // 初始化数据
-        Data.init();
     }
 
-    /** 通过配置数据创建实体 */
+    /** 
+     * 通过配置数据创建实体
+     * @param entityName 实体名 (kunpo-ec插件中导出的实体名)
+     * @returns 实体和组件
+     */
     public createEntity(entityName: string): { entity: Entity, components: Record<string, Component> } {
         const entity = this.entityPool.createEntity();
         const entityConfig = Data.getEntityConfig(entityName);
-        return this.addComponents(entity, entityConfig);
+        return { entity: entity, components: this.addComponents(entity, entityConfig) };
     }
 
     /** 
@@ -112,7 +107,7 @@ export class World {
      * @param entity 实体
      */
     public removeEntity(entity: Entity): void {
-        this.commandPool.addCommand(CommandType.RemoveAll, entity);
+        this.commandPool.delEntity(entity);
     }
 
     /** 
@@ -122,26 +117,22 @@ export class World {
      * @returns 组件实例
      */
     public addComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): T {
-        let component = this.componentPool.createComponent(comp);
-        this.commandPool.addCommand(CommandType.Add, entity, comp, component);
-        return component;
+        let component = this.componentPool.createComponent(comp.ctype);
+        this.commandPool.addComponent(entity, comp.ctype, component);
+        return component as T;
     }
 
-    public addComponents(entity: Entity, infos: { name: string, props: Record<string, any> }[]): { entity: Entity, components: Record<string, Component> } {
-        let comps: ComponentType<Component>[] = [];
-        let components: Component[] = [];
-        let result = { entity, components: {} as Record<string, Component> };
+    private addComponents(entity: Entity, infos: { name: string, props: Record<string, any> }[]): Record<string, Component> {
+        let result = {} as Record<string, Component>;
         for (const { name, props } of infos) {
-            const comp = Data.getComponentType(name);
-            let component = this.componentPool.createComponent(comp);
-            comps.push(comp);
-            components.push(component);
+            const comp = _ecsdecorator.getComponentCtor(name);
+            let component = this.componentPool.createComponent(comp.ctype);
             for (const key in props) {
                 (component as any)[key] = props[key];
             }
-            result.components[name] = component;
+            result[name] = component;
+            this.commandPool.addComponent(entity, comp.ctype, component);
         }
-        this.commandPool.addCommand(CommandType.AddBatch, entity, comps, components);
         return result;
     }
 
@@ -150,8 +141,10 @@ export class World {
      * @param entity 实体
      * @param comp 组件类型
      */
-    public removeComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): void {
-        this.commandPool.addCommand(CommandType.RemoveOnly, entity, comp);
+    public removeComponent<T extends IComponent>(entity: Entity, ...comps: ComponentType<T>[]): void {
+        for (const comp of comps) {
+            this.commandPool.delComponent(entity, comp.ctype);
+        }
     }
 
     /** 
@@ -161,7 +154,7 @@ export class World {
      * @returns 组件
      */
     public getComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): T | undefined {
-        return this.entityPool.getComponent(entity, comp);
+        return this.entityPool.getComponent(entity, comp.ctype) as T;
     }
 
     /**
@@ -187,7 +180,6 @@ export class World {
      * 清理整个世界
      */
     public clear(): void {
-        this.cacheCommands.length = 0;
         this.componentPool.clear();
         this.entityPool.clear();
         this.commandPool.clear();

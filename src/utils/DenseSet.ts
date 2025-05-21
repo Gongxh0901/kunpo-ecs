@@ -141,18 +141,6 @@ export class DenseSet<T extends IComponent> {
     }
 
     /**
-     * 遍历所有组件
-     * @param callback 回调函数，参数为组件和实体ID
-     * @internal
-     */
-    public forEach(callback: (component: T, entity: Entity) => void): void {
-        let len = this.dense.length;
-        for (let i = 0; i < len; i++) {
-            callback(this.dense[i], this.entities[i]);
-        }
-    }
-
-    /**
      * 获取组件总数 也就是实体数量
      * @internal
      */
@@ -189,6 +177,10 @@ export class DenseSet<T extends IComponent> {
         return this.cacheComponents;
     }
 
+    /**
+     * 重置缓存
+     * @internal
+     */
     private resetCache(): void {
         let size = this._size;
         this.cacheEntities.length = size;

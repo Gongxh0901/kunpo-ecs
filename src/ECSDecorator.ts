@@ -108,10 +108,22 @@ export namespace _ecsdecorator {
     }
     /** 用来存储组件注册信息 */
     const eclassMap: Map<any, ECComponentInfo> = new Map();
+    const typeToName: Map<number, string> = new Map();
+    const nameToCtor: Map<string, any> = new Map();
 
     /** 获取组件注册信息 */
     export function getComponentMaps(): Map<any, ECComponentInfo> {
         return eclassMap;
+    }
+
+    /** 通过组件类型获取组件名 */
+    export function getComponentName(type: number): string {
+        return typeToName.get(type);
+    }
+
+    /** 通过组件名获取组件构造函数 */
+    export function getComponentCtor(name: string): any {
+        return nameToCtor.get(name);
     }
 
     /**
@@ -123,6 +135,10 @@ export namespace _ecsdecorator {
         return function (ctor: any): void {
             ctor.ctype = ++cuid;
             ctor.cname = name;
+
+            typeToName.set(ctor.ctype, name);
+            nameToCtor.set(name, ctor);
+
             eclassMap.set(ctor, {
                 name: name,
                 props: ctor[ECPropMeta],

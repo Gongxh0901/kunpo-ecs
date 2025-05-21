@@ -5,8 +5,8 @@
  */
 
 import { ComponentPool } from "../component/ComponentPool";
-import { ComponentType } from "../component/ComponentType";
 import { IComponent } from "../component/IComponent";
+import { _ecsdecorator } from "../ECSDecorator";
 import { createMask, IMask } from "../utils/IMask";
 import { RecyclePool } from "../utils/RecyclePool";
 import { Entity } from "./Entity";
@@ -93,16 +93,15 @@ export class EntityPool {
     /**
      * 给实体添加组件
      * @param entity 实体
-     * @param comp 组件类型
+     * @param componentType 组件类型
      * @param component 组件
      * @internal
      */
-    public addComponent(entity: Entity, comp: ComponentType<IComponent>, component: IComponent): void {
-        if (this.hasComponent(entity, comp.ctype)) {
-            console.warn(`entity[${entity}]已经拥有组件[${comp.cname}]`);
+    public addComponent(entity: Entity, componentType: number, component: IComponent): void {
+        if (this.hasComponent(entity, componentType)) {
+            console.warn(`entity[${entity}]已经拥有组件[${_ecsdecorator.getComponentName(componentType)}]`);
             return;
         }
-        let componentType = comp.ctype;
         if (!this.entityMasks.has(entity)) {
             this.entityMasks.set(entity, this.maskRecyclePool.pop().set(componentType));
             this.entityComponentSet.set(entity, [componentType]);
@@ -115,56 +114,26 @@ export class EntityPool {
     }
 
     /**
-     * 给实体批量添加组件
-     * @param entity 实体
-     * @param comps 组件类型
-     * @param components 组件
-     * @internal
-     */
-    public addComponents(entity: Entity, comps: ComponentType<IComponent>[], components: IComponent[]): void {
-        let len = comps.length;
-        for (let i = 0; i < len; i++) {
-            let comp = comps[i];
-            let component = components[i];
-            if (this.hasComponent(entity, comp.ctype)) {
-                console.warn(`entity[${entity}]已经拥有组件[${comp.cname}]`);
-                return;
-            }
-            let componentType = comp.ctype;
-            if (!this.entityMasks.has(entity)) {
-                this.entityMasks.set(entity, this.maskRecyclePool.pop().set(componentType));
-                this.entityComponentSet.set(entity, [componentType]);
-                this._size++;
-            } else {
-                this.entityMasks.get(entity).set(componentType);
-                this.entityComponentSet.get(entity).push(componentType);
-            }
-            this._componentPool.addComponent(entity, componentType, component);
-        }
-    }
-
-
-    /**
      * 删除实体的组件
      * @param entity 实体
-     * @param comp 组件类型
+     * @param componentType 组件类型
      * @returns 是否成功删除
      */
-    public removeComponent(entity: Entity, comp: ComponentType<IComponent>): boolean {
+    public removeComponent(entity: Entity, componentType: number): boolean {
         if (!this.entityMasks.has(entity)) {
             // 实体上没有组件
-            console.warn(`entity[${entity}]已经被删除, 删除组件[${comp.cname}]失败`);
+            console.warn(`entity[${entity}]已经被删除, 删除组件[${_ecsdecorator.getComponentName(componentType)}]失败`);
             return false;
         }
         // 实体上没有组件
-        if (!this.hasComponent(entity, comp.ctype)) {
-            console.warn(`entity[${entity}]上没有组件[${comp.cname}]`);
+        if (!this.hasComponent(entity, componentType)) {
+            console.warn(`entity[${entity}]上没有组件[${_ecsdecorator.getComponentName(componentType)}]`);
             return false;
         }
-        this._componentPool.removeComponent(entity, comp.ctype);
+        this._componentPool.removeComponent(entity, componentType);
         // 删除组件
         let mask = this.entityMasks.get(entity);
-        mask.delete(comp.ctype);
+        mask.delete(componentType);
         if (mask.isEmpty()) {
             this._size--;
             // 回收掩码
@@ -178,7 +147,7 @@ export class EntityPool {
         } else {
             // 更新组件集合
             let components = this.entityComponentSet.get(entity);
-            let index = components.indexOf(comp.ctype);
+            let index = components.indexOf(componentType);
             components.splice(index, 1);
         }
         return true;
@@ -217,12 +186,12 @@ export class EntityPool {
      * @param comp 组件类型
      * @returns 组件
      */
-    public getComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): T {
-        if (!this.hasComponent(entity, comp.ctype)) {
-            console.warn(`获取组件[${comp.cname}]失败 entity[${entity}]上没有该组件`);
+    public getComponent<T extends IComponent>(entity: Entity, componentType: number): T {
+        if (!this.hasComponent(entity, componentType)) {
+            console.warn(`获取组件[${_ecsdecorator.getComponentName(componentType)}]失败 entity[${entity}]上没有该组件`);
             return null;
         }
-        return this._componentPool.getComponent(entity, comp.ctype) as T;
+        return this._componentPool.getComponent(entity, componentType) as T;
     }
 
     /**
