@@ -84,6 +84,7 @@ export class CommandPool {
         if (len === 0) {
             return;
         }
+        console.log("命令数量", len);
         // 看命令数量是否需要批量处理
         const needBatch = len > 200;
         const allReset = len > 2000;
