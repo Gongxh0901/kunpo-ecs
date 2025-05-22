@@ -66,14 +66,10 @@ export class RecyclePool<T> {
      */
     public recycle(obj: T): void {
         let capacity = this.pool.length;
-        if (capacity === this.max) {
-            console.log(`回收池【${this.name}】容量超出限制，不回收`);
-            return;
-        }
         // 池已满，先扩容再归还
-        if (this._count === capacity) {
+        if (this._count === capacity && capacity < this.max) {
             capacity = capacity >= 512 ? capacity + 256 : capacity * 2;
-            this.pool.length = capacity;
+            this.pool.length = Math.min(capacity, this.max);
             // console.log(`回收池【${this.name}】容量扩容: ${capacity}`);
         }
         this.reset(obj);
