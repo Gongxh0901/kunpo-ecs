@@ -36,6 +36,7 @@ export interface IMask {
     include(other: IMask): boolean;
     clear(): IMask;
     isEmpty(): boolean;
+    values(): Set<number>;
 }
 
 /**

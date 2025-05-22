@@ -40,7 +40,6 @@ export class DenseSet<T extends IComponent> {
         this._size = 0;
         this._min = 0;
         this._max = 0;
-
     }
 
     /**
@@ -74,7 +73,7 @@ export class DenseSet<T extends IComponent> {
                 if (len >= 1024) {
                     this.expand(512);
                 } else {
-                    this.expand(len);
+                    this.expand(Math.max(len, 32));
                 }
             }
         }
@@ -149,19 +148,6 @@ export class DenseSet<T extends IComponent> {
     }
 
     /**
-     * 清理所有内容
-     * @internal
-     */
-    public dispose(): void {
-        this.dense.length = 0;
-        this.entities.length = 0;
-        this.entityToIndex.clear();
-        this._size = 0;
-        this._min = 0;
-        this._max = 0;
-    }
-
-    /**
      * 获取包含此组件的所有实体
      */
     public getEntities(): Entity[] {
@@ -190,5 +176,18 @@ export class DenseSet<T extends IComponent> {
             this.cacheComponents[i] = this.dense[i];
         }
         this.isDirty = false;
+    }
+
+    /**
+     * 清理所有内容
+     * @internal
+     */
+    public clear(): void {
+        this.dense.length = 0;
+        this.entities.length = 0;
+        this.entityToIndex.clear();
+        this._size = 0;
+        this._min = 0;
+        this._max = 0;
     }
 }

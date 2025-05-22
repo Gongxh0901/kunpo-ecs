@@ -91,9 +91,8 @@ export class CommandPool {
     public delEntity(entity: Entity) {
         const components = this.entityPool.getComponents(entity);
         if (components) {
-            let len = components.length;
-            for (let i = 0; i < len; i++) {
-                this.delComponent(entity, components[i]);
+            for (const componentType of components) {
+                this.delComponent(entity, componentType);
             }
         }
     }

@@ -9,7 +9,7 @@ import { IMask } from "./IMask";
 export class BigIntMask implements IMask {
     private mask: bigint = BigInt(0);
     private _size: number = 0;
-
+    private _values: Set<number> = new Set();
     public get size(): number {
         return this._size;
     }
@@ -21,6 +21,7 @@ export class BigIntMask implements IMask {
     public set(num: number): IMask {
         this.mask |= BigInt(1) << BigInt(num);
         this._size++;
+        this._values.add(num);
         return this;
     }
 
@@ -31,6 +32,7 @@ export class BigIntMask implements IMask {
     public delete(num: number): IMask {
         this.mask &= ~(BigInt(1) << BigInt(num));
         this._size--;
+        this._values.delete(num);
         return this;
     }
 
@@ -69,5 +71,9 @@ export class BigIntMask implements IMask {
 
     public isEmpty(): boolean {
         return this.size == 0;
+    }
+
+    public values(): Set<number> {
+        return this._values;
     }
 }

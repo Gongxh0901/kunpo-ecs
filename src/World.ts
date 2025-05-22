@@ -21,6 +21,10 @@ import { SystemGroup } from "./system/SystemGroup";
 export class World {
     /** 世界名字 */
     public readonly name: string;
+
+    /** 最大实体数量 */
+    public readonly max: number = 0;
+
     /** 
      * 组件池
      */
@@ -48,9 +52,11 @@ export class World {
     /**
      * 创建一个世界
      * @param name 世界名字
+     * @param max 最大实体数量
      */
-    constructor(name: string) {
+    constructor(name: string, max: number = 1 << 18) {
         this.name = name;
+        this.max = max;
         // 初始化根系统
         this.rootSystem = new SystemGroup("RootSystem");
         this.rootSystem.world = this;
@@ -74,7 +80,7 @@ export class World {
         // 初始化组件池
         this.componentPool = new ComponentPool();
         // 初始化实体池
-        this.entityPool = new EntityPool(this.componentPool);
+        this.entityPool = new EntityPool(this.componentPool, this.max);
         // 初始化命令池
         this.commandPool = new CommandPool(this.entityPool, this.componentPool);
         // 初始化查询器池

@@ -12,6 +12,7 @@ export class ArrayMask implements IMask {
     private mask: Uint32Array;
     private length: number = 0;
     private _size: number = 0;
+    private _values: Set<number> = new Set();
 
     public get size(): number {
         return this._size;
@@ -32,6 +33,7 @@ export class ArrayMask implements IMask {
         /// >>> 无符号位移 高位补0
         this.mask[(num / 31) >>> 0] |= 1 << num % 31;
         this._size++;
+        this._values.add(num);
         return this;
     }
 
@@ -42,6 +44,7 @@ export class ArrayMask implements IMask {
     public delete(num: number): ArrayMask {
         this.mask[(num / 31) >>> 0] &= ~(1 << num % 31);
         this._size--;
+        this._values.delete(num);
         return this;
     }
 
@@ -88,10 +91,15 @@ export class ArrayMask implements IMask {
             this.mask[i] = 0;
         }
         this._size = 0;
+        this._values.clear();
         return this;
     }
 
     public isEmpty(): boolean {
         return this._size == 0;
+    }
+
+    public values(): Set<number> {
+        return this._values;
     }
 }

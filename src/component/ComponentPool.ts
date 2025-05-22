@@ -18,8 +18,8 @@ export class ComponentPool {
      * @internal
      */
     constructor() {
-        this.pools.length = 0;
         let componentMaps = _ecsdecorator.getComponentMaps();
+        this.pools.length = componentMaps.size + 1;
         for (let ctor of componentMaps.keys()) {
             let type = ctor.ctype;
             // 创建稀疏集合
@@ -97,6 +97,9 @@ export class ComponentPool {
      * @internal
      */
     public clear(): void {
-        this.pools.length = 0;
+        for (let i = 1; i < this.pools.length; i++) {
+            let pool = this.pools[i];
+            pool.clear();
+        }
     }
 }

@@ -64,7 +64,7 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
             return;
         }
         this.changeEntities.add(entity);
-        if (this.changeEntities.size > 500) {
+        if (this.changeEntities.size > 100) {
             this.needFullRefresh = true;
         }
     }
@@ -73,24 +73,13 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
         if (this.needFullRefresh) {
             return;
         }
-        if (this.changeEntities.size + entities.length > 500) {
+        if (this.changeEntities.size + entities.length > 100) {
             this.needFullRefresh = true;
             return;
         }
         for (let i = 0; i < entities.length; i++) {
             this.changeEntities.add(entities[i]);
         }
-
-        // if (this.needFullRefresh) {
-        //     return;
-        // }
-        // if (entities.size > 1000) {
-        //     this.needFullRefresh = true;
-        // } else {
-        //     for (const entity of entities) {
-        //         this.changeEntities.add(entity);
-        //     }
-        // }
     }
 
     /**
