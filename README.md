@@ -1,3 +1,196 @@
-# kunpo-esc
+# Kunpo-ECS
 
-正在开发中
+高性能实体组件系统 (Entity-Component-System) 框架，为游戏开发和大规模实时模拟提供优化解决方案。
+
+## 特性
+
+- **高性能设计**：优化的数据结构和算法，支持处理大量实体
+- **内存高效**：使用对象池和密集数据结构减少内存开销和GC压力
+- **简洁API**：直观易用的接口设计，降低学习成本
+- **完整类型支持**：使用TypeScript构建，提供全面的类型安全
+- **灵活查询系统**：强大的实体查询功能
+
+## 安装
+
+```bash
+npm install kunpo-esc
+```
+
+## 核心概念
+
+- **实体(Entity)**：游戏对象的唯一标识符，本质上是一个纯数字的ID
+- **组件(Component)**：纯数据结构，附加到实体上，描述实体特性
+- **系统(System)**：包含游戏逻辑，处理拥有特定组件组合的实体
+- **世界(World)**：管理所有实体、组件和系统的容器
+
+## 基本使用
+
+### 1. 定义组件
+
+* 使用装饰器标记的属性 才能被 ***kunpoec*** 插件检测到
+
+```typescript
+import { _ecsdecorator, Component } from 'kunpo-esc';
+const { ecsclass, ecsprop } = _ecsdecorator;
+
+// 定义位置组件
+@ecsclass("Position")
+class Position extends Component {
+  	// 使用装饰器标记的属性 才能被 kunpoec 插件检测到
+    @ecsprop({ type: "int", defaultValue: 0 })
+    public x: number = 0;
+
+    @ecsprop({ type: "int", defaultValue: 0 })
+    public y: number = 0;
+    
+    // 必须实现reset方法用于对象池回收时重置数据
+    public reset(): void {
+        this.x = 0;
+        this.y = 0;
+    }
+}
+
+// 定义速度组件
+@ecsclass("Velocity")
+class Velocity extends Component {
+    vx: number = 0;
+    vy: number = 0;
+    
+    reset(): void {
+        this.vx = 0;
+        this.vy = 0;
+    }
+}
+```
+
+### 2. 定义系统
+
+* 系统也需要使用装饰器标记
+
+```typescript
+import { System, _ecsdecorator } from 'kunpo-esc';
+const { ecsystem } = _ecsdecorator;
+
+@ecsystem("MovementSystem", { describe: "处理实体移动的系统" })
+class MovementSystem extends System {
+  	// 需配置系统关心的组件
+	  protected defineQuery(): ecs.IQueryData {
+        return {
+            includes: [Position, Speed, Direction],  // 必须包含的组件
+          	excludes: [Component1],	// 必须不包含的
+            optionals: [Component2], // 可选的
+        }
+    }
+  
+    // 更新
+    update(dt: number): void {
+        // 获取所有筛选出来的实体
+        const entities = this.query.getEntities();
+      	// 获取必须包含的组件
+        const positions = this.query.getComponents(Position);
+        const velocities = this.query.getComponents(Velocity);
+      
+      	// 这是可选的组件
+      	const component2s = this.query.getComponents(Component2);
+        
+        // 更新所有实体的位置
+        for (let i = 0; i < entities.length; i++) {
+            positions[i].x += velocities[i].vx * dt;
+            positions[i].y += velocities[i].vy * dt;
+          
+          	if (component2s[i]) {
+								// do something
+            }
+        }
+    }
+}
+```
+
+
+### 3. 创建世界和配置系统
+
+```typescript
+import { World } from 'kunpo-esc';
+
+// 第1步
+// 创建世界实例
+// 参数1: 世界名称
+// 参数2: 最大实体数量 根据游戏规模分配一个尽量小的值 (最好是2的指数)
+const world = new World("GameWorld", 2 >> 16);
+
+// 第2步
+// 注册系统
+
+// 系统组
+// 参数1: 组名
+// 参数2: 帧间隔（可对不需要每帧更新的系统组添加帧间隔 3表示每3帧更新一次）
+let group1 = new ecs.SystemGroup("系统组1", 3);
+defGroup
+    .addSystem(new System1())
+    .addSystem(new System2())
+    .addSystem(new System3());
+
+// 添加系统和系统组
+world.addSystem(new System4())
+  	 .addSystem(group1)
+  	 .addSystem(new System5());
+
+
+// 第3步
+// 初始化世界 (必须调用)
+world.initialize();
+
+// 第4步 在游戏循环中更新世界 并传入帧间隔
+world.update(dt);
+```
+
+### 4. 添加组件
+
+* 方式1: 创建空实体，手动添加组件
+
+  ```typescript
+  // 创建实体 - 空实体只有ID
+  const entity = world.createEmptyEntity();
+  
+  // 添加组件
+  const position = world.addComponent(entity, Position);
+  position.x = 10;
+  position.y = 20;
+  
+  const velocity = world.addComponent(entity, Velocity);
+  velocity.vx = 1;
+  velocity.vy = 2;
+  ```
+
+* 方式2: 通过配置数据创建实体 
+
+  >数据配置使用creator商店中的插件 ***kunpoec*** 配置
+  >
+  >插件版本1.0.3开始支持导出 ecs使用的数据
+  
+  ```typescript
+  // 通过配置创建实体
+  world.createEntity("Entity1");
+  ```
+
+
+## 高级功能
+
+### 命令缓冲区
+
+Kunpo-ECS使用命令缓冲模式管理实体和组件变更，避免迭代过程中修改数据结构：
+
+```typescript
+// 删除实体(会延迟到下一帧的update前处理)
+world.removeEntity(entity);
+
+// 添加组件(会延迟到下一帧的update前处理)
+world.addComponent(entity, Position);
+
+// 删除组件(会延迟到下一帧的update前处理)
+world.removeComponent(entity, Position);
+```
+
+## 贡献
+
+欢迎提交问题和合并请求。对于重大更改，请先开issue讨论您想更改的内容。
