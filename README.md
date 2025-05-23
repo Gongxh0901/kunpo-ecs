@@ -4,10 +4,20 @@
 
 ## 特性
 
+- **提供数据编辑器**: https://store.cocos.com/app/detail/7311 
+
+  > 编辑器基于creator3.8.6开发
+  >
+  > 支持creator3.7.0及之后的版本
+
 - **高性能设计**：优化的数据结构和算法，支持处理大量实体
+
 - **内存高效**：使用对象池和密集数据结构减少内存开销和GC压力
+
 - **简洁API**：直观易用的接口设计，降低学习成本
+
 - **完整类型支持**：使用TypeScript构建，提供全面的类型安全
+
 - **灵活查询系统**：强大的实体查询功能
 
 ## 安装
@@ -73,13 +83,18 @@ const { ecsystem } = _ecsdecorator;
 
 @ecsystem("MovementSystem", { describe: "处理实体移动的系统" })
 class MovementSystem extends System {
-  	// 需配置系统关心的组件
-	  protected defineQuery(): ecs.IQueryData {
-        return {
-            includes: [Position, Speed, Direction],  // 必须包含的组件
-          	excludes: [Component1],	// 必须不包含的
-            optionals: [Component2], // 可选的
-        }
+  	// 配置查询规则
+    protected onInit(): void {
+      	// 这个规则的含义是
+      	// 必须包含 Position、Speed和Direction 三种实体
+      	// 并且包含 Component1和Component2中的任意一个
+      	// 并且必须不包含Component3
+      	// Component4是可选的 筛选组件时会把匹配到的实体上的Component4组件也查出来
+      	// 如果没有就给个null值
+        this.matcher.allOf(Position, Speed, Direction)
+          					.anyOf(Component1, Component2);
+      							.excludeOf(Component3);
+      							.optionalOf(Component4);
     }
   
     // 更新
@@ -174,11 +189,11 @@ world.update(dt);
   ```
 
 
-## 高级功能
+## 注意事项
 
 ### 命令缓冲区
 
-Kunpo-ECS使用命令缓冲模式管理实体和组件变更，避免迭代过程中修改数据结构：
+Kunpo-ECS使用命令缓冲模式管理实体和组件变更，避免迭代过程中修改数据结构，导致出错，删除实体、删除组件、添加组件等操作会延迟到下一帧的update前处理
 
 ```typescript
 // 删除实体(会延迟到下一帧的update前处理)
@@ -190,6 +205,18 @@ world.addComponent(entity, Position);
 // 删除组件(会延迟到下一帧的update前处理)
 world.removeComponent(entity, Position);
 ```
+
+### 数据结构
+
+#### 此架构中使用的是密集数组的数据组织形式来存储组件数据
+
+* 每种类型的组件存到同一个数组中，中间无空位
+* 维护一个实体到组件的索引，实现组件查询 O(1)时间复杂度
+
+#### 查询器
+
+* 查询器条件相同会复用一个查询器
+* 多次获取查询结果无消耗
 
 ## 贡献
 
