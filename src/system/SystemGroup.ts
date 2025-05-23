@@ -66,13 +66,13 @@ export class SystemGroup implements ISystem {
         this.frameTime = 0;
     }
 
-    /** 初始化所有子系统 */
-    public init(): void {
+    /** 初始化所有子系统 @internal */
+    public _initialize(): void {
         let len = this.systems.length;
         for (let i = 0; i < len; i++) {
             let system = this.systems[i];
             system.world = this.world;
-            system.init();
+            system._initialize();
         }
     }
 

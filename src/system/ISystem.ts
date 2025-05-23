@@ -15,8 +15,8 @@ export interface ISystem {
     /** 世界 */
     world: World;
 
-    /** 系统初始化 */
-    init(): void;
+    /** 系统初始化 内部方法 @internal */
+    _initialize(): void;
 
     /** 系统更新 */
     update(dt: number): void;

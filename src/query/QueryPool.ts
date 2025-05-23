@@ -9,6 +9,7 @@
 import { CommandPool } from "../command/CommandPool";
 import { ComponentPool } from "../component/ComponentPool";
 import { EntityPool } from "../entity/EntityPool";
+import { Matcher } from "./Matcher";
 import { Query } from "./Query";
 
 export class QueryPool {
@@ -51,19 +52,17 @@ export class QueryPool {
     /**
      * 创建并添加查询器
      * @param key 查询器唯一ID
-     * @param includes 必须包含的组件
-     * @param excludes 必须排除的组件
-     * @param optionals 可选包含的组件
+     * @param matcher 查询器
      * @returns 查询器
      */
-    public add(key: string, includes: number[], excludes: number[], optionals: number[]): Query {
+    public add(key: string, matcher: Matcher): Query {
         if (this.has(key)) {
             return this.queries.get(key);
         } else {
-            const query = new Query(this.componentPool, this.entityPool, includes, excludes, optionals)
+            const query = new Query(this.componentPool, this.entityPool, matcher)
             this.queries.set(key, query);
             // 查询器注册到命令缓冲池中
-            this.commandPool.registerQuery(query, [...includes, ...excludes, ...optionals]);
+            this.commandPool.registerQuery(query, matcher.indices);
             return query;
         }
     }

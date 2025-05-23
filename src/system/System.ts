@@ -6,47 +6,52 @@
 
 import { _ecsdecorator } from "../ECSDecorator";
 import { IQueryResult } from "../query/IQuery";
+import { Matcher } from "../query/Matcher";
 import { World } from "../World";
-import { IQueryData, ISystem } from "./ISystem";
+import { ISystem } from "./ISystem";
 
 export abstract class System implements ISystem {
-    /** 
-     * 世界
-     */
+    /** 世界 */
     public world: World;
-    /** 
-     * 是否启用
-     * @internal
-     */
-    protected enabled: boolean = true;
 
-    /**
-     * 系统名称
-     */
+    /** 是否启用 @internal */
+    private _enabled: boolean = true;
+
+
+    /** 查询器结果 */
+    public query: IQueryResult;
+
+    /** 匹配器 @internal */
+    private _matcher: Matcher;
+
+    /** 系统名称 */
     public get name(): string {
         return _ecsdecorator.getSystemName(this.constructor);
     }
 
     /**
-     * 查询器
+     * 创建匹配器规则
+     * 最后必须调用 build() 方法
      */
-    public query: IQueryResult;
-
-    /**
-     * 系统初始化
-     */
-    public init(): void {
-        let info = this.defineQuery();
-        let includes = info.includes || [];
-        let excludes = info.excludes || [];
-        let optionals = info.optionals || [];
-        this.query = this.world.QueryBuilder.with(...includes).without(...excludes).optional(...optionals).build();
+    protected get matcher(): Matcher {
+        this._matcher = this._matcher || this.world.matcher;
+        return this._matcher;
     }
 
     /**
-     * 初始化查询器
+     * 系统初始化
+     * @internal
      */
-    protected abstract defineQuery(): IQueryData;
+    public _initialize(): void {
+        this.onInit()
+        this.query = this.matcher.build();
+    }
+
+    /**
+     * 系统初始化
+     * 在这里写匹配器规则
+     */
+    protected abstract onInit(): void;
 
     /**
      * 系统更新
@@ -58,20 +63,20 @@ export abstract class System implements ISystem {
      * 设置系统启用/禁用
      */
     public setEnabled(enabled: boolean): void {
-        this.enabled = enabled;
+        this._enabled = enabled;
     }
 
     /**
      * 获取系统启用/禁用
      */
     public isEnabled(): boolean {
-        return this.enabled;
+        return this._enabled;
     }
 
     /**
      * 清除系统
      */
     public clear(): void {
-        this.enabled = true;
+        this._enabled = true;
     }
 }

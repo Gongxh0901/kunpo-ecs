@@ -13,7 +13,7 @@ import { Data } from "./Data";
 import { _ecsdecorator } from "./ECSDecorator";
 import { Entity } from "./entity/Entity";
 import { EntityPool } from "./entity/EntityPool";
-import { QueryBuilder } from "./query/QueryBuilder";
+import { Matcher } from "./query/Matcher";
 import { QueryPool } from "./query/QueryPool";
 import { ISystem } from "./system/ISystem";
 import { System } from "./system/System";
@@ -53,6 +53,9 @@ export class World {
      */
     private rootSystem: SystemGroup = null;
 
+    /** 获取实体数量 */
+    public get entityCount(): number { return this.entityPool.size }
+
     /**
      * 创建一个世界
      * @param name 世界名字
@@ -91,7 +94,7 @@ export class World {
         this.queryPool = new QueryPool(this.componentPool, this.entityPool, this.commandPool);
 
         // 系统初始化
-        this.rootSystem.init();
+        this.rootSystem._initialize();
     }
 
     /** 
@@ -207,8 +210,16 @@ export class World {
      * @returns 查询构建器
      * @internal
      */
-    public get QueryBuilder(): QueryBuilder {
-        return new QueryBuilder(this.queryPool);
+    public get matcher(): Matcher {
+        return new Matcher(this.queryPool);
+    }
+
+    /**
+     * 获取所有实体 
+     * 调试可用，不要在生产环境中使用
+     */
+    public get entities(): Entity[] {
+        return this.entityPool.entities;
     }
 
     /**

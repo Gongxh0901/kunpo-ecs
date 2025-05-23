@@ -181,6 +181,14 @@ export class EntityPool {
     }
 
     /**
+     * 获取所有实体 调试可用，不要在生产环境中使用
+     * @internal
+     */
+    public get entities(): Entity[] {
+        return Array.from(this.entityMasks.keys());
+    }
+
+    /**
      * 清理实体池
      */
     public clear(): void {

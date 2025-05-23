@@ -10,7 +10,6 @@ import { ComponentType } from "../component/ComponentType";
 import { IComponent } from "../component/IComponent";
 import { Entity } from "../entity/Entity";
 import { EntityPool } from "../entity/EntityPool";
-import { IMask } from "../utils/IMask";
 
 export interface IQueryResult {
     /** @internal 缓存上次查询的结果, 避免每帧重新计算 */
@@ -38,9 +37,9 @@ export interface IQueryEvent {
     /** 变化的实体集合 */
     batchChangeEntities(entities: Entity[]): void;
     /** 根据变化刷新缓存 */
-    refreshCache(): void;
+    cacheRefresh(): void;
     /** 全量刷新 */
-    resetCache(): void;
+    cacheReset(): void;
     /** 清理 */
     clear(): void;
 }
@@ -51,19 +50,4 @@ export interface IQuery {
 
     /** 组件池的引用 */
     componentPool: ComponentPool;
-
-    /** 必须包含的组件掩码 */
-    _includeMask: IMask;
-
-    /** 必须排除的组件掩码 */
-    _excludeMask: IMask;
-
-    /** 必须得组件 */
-    includes: number[];
-
-    /** 必须排除的组件 */
-    excludes: number[];
-
-    /** 可选组件 */
-    optionals: number[];
 }
