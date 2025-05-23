@@ -1,6 +1,6 @@
 {
     "name": "kunpoecs",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "description": "一个ts实现的ECS系统",
     "main": "./dist/kunpoecs.cjs",
     "module": "./dist/kunpoecs.mjs",
