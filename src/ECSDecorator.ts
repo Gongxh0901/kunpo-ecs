@@ -111,6 +111,8 @@ export namespace _ecsdecorator {
     const typeToName: Map<number, string> = new Map();
     const nameToCtor: Map<string, any> = new Map();
 
+    const ecsystemMap: Map<any, string> = new Map();
+
     /** 获取组件注册信息 */
     export function getComponentMaps(): Map<any, ECComponentInfo> {
         return eclassMap;
@@ -124,6 +126,11 @@ export namespace _ecsdecorator {
     /** 通过组件名获取组件构造函数 */
     export function getComponentCtor(name: string): any {
         return nameToCtor.get(name);
+    }
+
+    /** 通过系统构造函数获取名字 */
+    export function getSystemName(ctor: any): string {
+        return ecsystemMap.get(ctor);
     }
 
     /**
@@ -155,6 +162,7 @@ export namespace _ecsdecorator {
         /** target 类的构造函数 */
         return function (ctor: any): void {
             ctor.cname = name;
+            ecsystemMap.set(ctor, name);
         };
     }
 

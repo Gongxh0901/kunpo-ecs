@@ -8,6 +8,9 @@ import { World } from "../World";
 import { ISystem } from "./ISystem";
 
 export class SystemGroup implements ISystem {
+    /** @internal */
+    private _name: string = "";
+
     /** 
      * 世界引用
      */
@@ -22,7 +25,7 @@ export class SystemGroup implements ISystem {
      * 系统名称
      */
     public get name(): string {
-        return this.constructor.name;
+        return this._name;
     }
 
     /** 
@@ -30,12 +33,6 @@ export class SystemGroup implements ISystem {
      * @internal
      */
     protected systems: ISystem[] = [];
-
-    /**
-     * 系统组描述
-     * @param describe
-     */
-    private describe: string = "";
 
     /**
      * 帧间隔
@@ -56,11 +53,11 @@ export class SystemGroup implements ISystem {
 
     /**
      * 系统组实例化
-     * @param describe 系统组描述
+     * @param name 系统组名称
      * @param frameInterval 帧间隔 (1=每帧, 2=隔帧, 3=每3帧一次...)
      */
-    constructor(describe: string, frameInterval: number = 1) {
-        this.describe = describe;
+    constructor(name: string, frameInterval: number = 1) {
+        this._name = name;
         // 帧间隔最小为1
         this.frameInterval = Math.max(1, frameInterval);
         // 帧计数
@@ -69,9 +66,7 @@ export class SystemGroup implements ISystem {
         this.frameTime = 0;
     }
 
-    /**
-     * 初始化所有子系统
-     */
+    /** 初始化所有子系统 */
     public init(): void {
         let len = this.systems.length;
         for (let i = 0; i < len; i++) {
@@ -129,19 +124,17 @@ export class SystemGroup implements ISystem {
     }
 
     /**
-     * 获取子系统数量
-     * @returns 子系统数量
+     * 根据名称查找子系统
+     * @param name 系统名称
+     * @returns 子系统
      */
-    public getSystemCount(): number {
-        return this.systems.length;
-    }
-
-    /**
-     * 获取所有子系统
-     * @returns 子系统列表
-     */
-    public getSystems(): ISystem[] {
-        return this.systems;
+    public getSystem(name: string): ISystem {
+        return this.systems.find(subSystem => {
+            if (subSystem instanceof SystemGroup) {
+                return subSystem.getSystem(name);
+            }
+            return subSystem.name === name;
+        });
     }
 
     /**
@@ -155,17 +148,4 @@ export class SystemGroup implements ISystem {
         // 启用/禁用
         this.enabled = true;
     }
-
-    // /**
-    //  * 根据名称查找子系统
-    //  */
-    // public find(system: SystemType<System>): ISystem[] {
-    //     let name = system.cname;
-    //     return this.systems.filter(subSystem => {
-    //         if (subSystem instanceof SystemGroup) {
-    //             return subSystem.find(system);
-    //         }
-    //         return subSystem.name === name;
-    //     });
-    // }
 }

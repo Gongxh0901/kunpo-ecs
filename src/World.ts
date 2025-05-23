@@ -16,7 +16,9 @@ import { EntityPool } from "./entity/EntityPool";
 import { QueryBuilder } from "./query/QueryBuilder";
 import { QueryPool } from "./query/QueryPool";
 import { ISystem } from "./system/ISystem";
+import { System } from "./system/System";
 import { SystemGroup } from "./system/SystemGroup";
+import { SystemType } from "./system/SystemType";
 
 export class World {
     /** 世界名字 */
@@ -27,10 +29,12 @@ export class World {
 
     /** 
      * 组件池
+     * @internal
      */
     public componentPool: ComponentPool = null;
     /** 
      * 实体池
+     * @internal
      */
     public entityPool: EntityPool = null;
     /**
@@ -103,6 +107,7 @@ export class World {
 
     /** 
      * 创建一个空实体 (实体仅包含一个ID)
+     * @returns 实体
      */
     public createEmptyEntity(): Entity {
         return this.entityPool.createEntity();
@@ -128,6 +133,10 @@ export class World {
         return component as T;
     }
 
+    /** 
+     * 添加组件 实际是加入缓冲池，等待帧结束时执行
+     * @internal
+     */
     private addComponents(entity: Entity, infos: { name: string, props: Record<string, any> }[]): Record<string, Component> {
         let result = {} as Record<string, Component>;
         for (const { name, props } of infos) {
@@ -163,6 +172,25 @@ export class World {
         return this.entityPool.getComponent(entity, comp.ctype) as T;
     }
 
+    /** 
+     * 检查实体是否包含组件
+     * @param entity 实体
+     * @param comp 组件类型
+     * @returns 是否包含
+     */
+    public hasComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): boolean {
+        return this.entityPool.hasComponent(entity, comp.ctype);
+    }
+
+    /** 
+     * 获取系统
+     * @param system 系统类型
+     * @returns 系统
+     */
+    public getSystem<T extends System>(system: SystemType<System>): ISystem {
+        return this.rootSystem.getSystem(system.cname) as T;
+    }
+
     /**
      * 更新世界
      * @param dt 时间间隔
@@ -177,6 +205,7 @@ export class World {
     /**
      * 创建查询构建器
      * @returns 查询构建器
+     * @internal
      */
     public get QueryBuilder(): QueryBuilder {
         return new QueryBuilder(this.queryPool);

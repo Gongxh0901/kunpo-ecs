@@ -4,6 +4,7 @@
  * @Description: 系统基类
  */
 
+import { _ecsdecorator } from "../ECSDecorator";
 import { IQueryResult } from "../query/IQuery";
 import { World } from "../World";
 import { IQueryData, ISystem } from "./ISystem";
@@ -23,7 +24,7 @@ export abstract class System implements ISystem {
      * 系统名称
      */
     public get name(): string {
-        return this.constructor.name;
+        return _ecsdecorator.getSystemName(this.constructor);
     }
 
     /**
