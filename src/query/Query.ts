@@ -50,6 +50,7 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
         this.changeEntities.add(entity);
         if (this.changeEntities.size > 100) {
             this.needFullRefresh = true;
+            this.changeEntities.clear();
         }
     }
 
@@ -59,6 +60,7 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
         }
         if (this.changeEntities.size + entities.length > 100) {
             this.needFullRefresh = true;
+            this.changeEntities.clear();
             return;
         }
         for (let i = 0; i < entities.length; i++) {

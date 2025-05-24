@@ -90,8 +90,8 @@ export class ArrayMask implements IMask {
         for (let i = 0; i < this.length; i++) {
             this.mask[i] = 0;
         }
-        this._size = 0;
         this._values.clear();
+        this._size = 0;
         return this;
     }
 

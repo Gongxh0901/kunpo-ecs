@@ -65,6 +65,7 @@ export class BigIntMask implements IMask {
 
     public clear(): BigIntMask {
         this.mask = BigInt(0);
+        this._values.clear();
         this._size = 0;
         return this;
     }

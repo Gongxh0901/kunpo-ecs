@@ -89,7 +89,7 @@ export class World {
         // 初始化实体池
         this.entityPool = new EntityPool(this.componentPool, this.max);
         // 初始化命令池
-        this.commandPool = new CommandPool(this.entityPool, this.componentPool);
+        this.commandPool = new CommandPool(this.entityPool);
         // 初始化查询器池
         this.queryPool = new QueryPool(this.componentPool, this.entityPool, this.commandPool);
 
@@ -215,11 +215,10 @@ export class World {
     }
 
     /**
-     * 获取所有实体 
-     * 调试可用，不要在生产环境中使用
+     * 遍历所有实体
      */
-    public get entities(): Entity[] {
-        return this.entityPool.entities;
+    public forEachEntity(callback: (entity: Entity) => void): void {
+        this.entityPool.forEachEntity(callback);
     }
 
     /**

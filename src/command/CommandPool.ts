@@ -4,7 +4,6 @@
  * @Description: 命令缓冲池
  */
 
-import { ComponentPool } from "../component/ComponentPool";
 import { IComponent } from "../component/IComponent";
 import { Entity } from "../entity/Entity";
 import { EntityPool } from "../entity/EntityPool";
@@ -18,11 +17,6 @@ export class CommandPool {
      * @internal
      */
     private readonly entityPool: EntityPool;
-    /** 
-     * 组件池的引用
-     * @internal
-     */
-    private readonly componentPool: ComponentPool;
 
     /** 添加组件命令 key是组件类型 */
     private addCommands: Map<number, CommandAdd> = new Map();
@@ -32,9 +26,8 @@ export class CommandPool {
     /** 根据组件类型可以找到所有关心该组件的查询器 */
     private readonly componentTypeQuerys: Map<number, IQueryEvent[]> = new Map();
 
-    constructor(entityPool: EntityPool, componentPool: ComponentPool) {
+    constructor(entityPool: EntityPool) {
         this.entityPool = entityPool;
-        this.componentPool = componentPool;
     }
 
     /**
@@ -89,12 +82,9 @@ export class CommandPool {
      * 删除实体
      */
     public delEntity(entity: Entity) {
-        const components = this.entityPool.getComponents(entity);
-        if (components) {
-            for (const componentType of components) {
-                this.delComponent(entity, componentType);
-            }
-        }
+        this.entityPool.forEachComponent(entity, (componentType: number) => {
+            this.delComponent(entity, componentType);
+        });
     }
 
     public update() {

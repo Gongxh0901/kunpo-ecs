@@ -171,13 +171,14 @@ export class EntityPool {
         return this.entityMasks.get(entity);
     }
 
-    /**
-     * 获取实体上的组件集合
-     * @param entity 实体
-     * @returns 组件集合
-     */
-    public getComponents(entity: Entity): Set<number> {
-        return this.entityMasks.get(entity)?.values() || null;
+    /** 遍历实体上的组件 */
+    public forEachComponent(entity: Entity, callback: (componentType: number) => void): void {
+        this.entityMasks.get(entity)?.values().forEach(componentType => callback(componentType));
+    }
+
+    /** 遍历所有实体 */
+    public forEachEntity(callback: (entity: Entity) => void): void {
+        this.entityMasks.forEach((mask, entity) => callback(entity));
     }
 
     /**
