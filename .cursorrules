@@ -1,0 +1,123 @@
+# Kunpo-ECS 项目规则
+
+你是一个专门用于 Kunpo-ECS 项目的 AI 助手。这是一个高性能的 TypeScript ECS (Entity-Component-System) 游戏框架库。
+
+## 项目概况
+- **项目类型**: TypeScript 库
+- **主要用途**: 游戏开发中的 ECS 系统实现
+- **目标平台**: Cocos Creator 3.7.0+
+- **构建工具**: Rollup
+- **包管理**: npm
+
+## 代码规范
+
+### TypeScript 规范
+- 严格模式已启用 (`strict: true`)
+- 使用 ES6 目标
+- 启用实验性装饰器 (`experimentalDecorators: true`)
+- 使用严格的空值检查但已禁用 (`strictNullChecks: false`)
+
+### 命名约定
+- **类名**: 使用 PascalCase (如 `Position`, `MovementSystem`)
+- **变量/方法**: 使用 camelCase (如 `entityId`, `addComponent`)
+- **常量**: 使用 UPPER_SNAKE_CASE
+- **文件名**: 使用 PascalCase.ts (如 `World.ts`, `ECSDecorator.ts`)
+
+### ECS 架构规范
+
+#### 组件 (Component)
+- 必须继承 `Component` 基类
+- 必须使用 `@ecsclass` 装饰器标记
+- 可观察属性必须使用 `@ecsprop` 装饰器
+- 必须实现 `reset()` 方法用于对象池回收
+- 组件应该只包含数据，不包含逻辑
+
+```typescript
+@ecsclass("ComponentName")
+class ComponentName extends Component {
+    @ecsprop({ type: "int", defaultValue: 0 })
+    public value: number = 0;
+    
+    public reset(): void {
+        this.value = 0;
+    }
+}
+```
+
+#### 系统 (System)
+- 必须继承 `System` 基类
+- 必须使用 `@ecsystem` 装饰器标记，包含名称和描述
+- 在 `onInit()` 中配置 matcher 查询规则
+- 在 `update(dt: number)` 中实现游戏逻辑
+- 使用 `this.query` 获取匹配的实体和组件
+
+```typescript
+@ecsystem("SystemName", { describe: "系统描述" })
+class SystemName extends System {
+    protected onInit(): void {
+        this.matcher.allOf(Component1, Component2);
+    }
+    
+    update(dt: number): void {
+        // 系统逻辑
+    }
+}
+```
+
+#### 查询规则
+- `allOf()`: 必须包含的组件
+- `anyOf()`: 至少包含一个的组件
+- `excludeOf()`: 必须不包含的组件
+- `optionalOf()`: 可选组件（可能为 null）
+
+### 性能考虑
+- 使用对象池机制，避免频繁创建/销毁对象
+- 组件的 `reset()` 方法必须重置所有属性到初始状态
+- 避免在系统的 `update()` 方法中分配新对象
+- 使用命令缓冲区模式处理实体/组件的增删操作
+
+### 文档规范
+- 类和重要方法必须有 JSDoc 注释
+- 中文注释用于代码说明
+- 英文用于对外 API 文档
+- 示例代码应该完整可运行
+
+## 常见模式
+
+### 创建实体的两种方式
+1. 空实体 + 手动添加组件:
+```typescript
+const entity = world.createEmptyEntity();
+const component = world.addComponent(entity, ComponentType);
+```
+
+2. 通过配置数据创建:
+```typescript
+world.createEntity("EntityConfigName");
+```
+
+### 系统组使用
+```typescript
+const group = new SystemGroup("GroupName", frameInterval);
+group.addSystem(new System1()).addSystem(new System2());
+world.addSystem(group);
+```
+
+## 注意事项
+- 所有实体/组件变更操作都是延迟执行的（命令缓冲区）
+- 在系统迭代过程中不要直接修改实体/组件结构
+- 组件数据编辑使用 Cocos Creator 的 kunpoec 插件
+- 最大实体数量在创建 World 时指定，建议使用 2 的幂次
+
+## 文件结构
+- `src/`: 源代码目录
+  - `component/`: 组件定义
+  - `system/`: 系统定义
+  - `entity/`: 实体相关
+  - `query/`: 查询系统
+  - `command/`: 命令系统
+  - `utils/`: 工具类
+- `dist/`: 构建输出
+- `rollup.config.mjs`: 构建配置
+
+在协助开发时，请始终遵循这些规则和模式，确保代码质量和架构一致性。 
