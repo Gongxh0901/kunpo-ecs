@@ -87,9 +87,9 @@ export class ComponentPool {
         return this.pools[componentType].size;
     }
 
-    /** 获取拥有特定组件的实体 */
-    public getEntitiesByComponentType(componentType: number): Entity[] {
-        return this.pools[componentType].getEntities();
+    /** 获取对应的组件池 */
+    public getPool(componentType: number): DenseSet<IComponent> {
+        return this.pools[componentType];
     }
 
     /**

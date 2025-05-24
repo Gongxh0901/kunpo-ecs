@@ -23,11 +23,6 @@ export class DenseSet<T extends IComponent> {
     private _min: number = 0;
     private _max: number = 0;
 
-    /** 脏标记 */
-    private isDirty: boolean = true;
-    private cacheEntities: Entity[] = [];
-    private cacheComponents: T[] = [];
-
     /** 创建新对象的工厂函数 */
     private factory: () => T = null;
 
@@ -100,7 +95,6 @@ export class DenseSet<T extends IComponent> {
         this.entityToIndex.set(entity, this._size);
         this._size++;
         this._min++;
-        this.isDirty = true;
     }
 
     /**
@@ -126,7 +120,6 @@ export class DenseSet<T extends IComponent> {
         // 重置组件数据
         this.dense[lastIndex].reset();
         this._size--;
-        this.isDirty = true;
     }
 
     /**
@@ -140,42 +133,18 @@ export class DenseSet<T extends IComponent> {
     }
 
     /**
-     * 获取组件总数 也就是实体数量
+     * 获取使用中的组件总数 (实体数量)
      * @internal
      */
     public get size(): number {
         return this._size;
     }
 
-    /**
-     * 获取包含此组件的所有实体
-     */
-    public getEntities(): Entity[] {
-        this.isDirty && this.resetCache();
-        return this.cacheEntities;
-    }
-
-    /**
-     * 获取所有组件
-     */
-    public getComponents(): T[] {
-        this.isDirty && this.resetCache();
-        return this.cacheComponents;
-    }
-
-    /**
-     * 重置缓存
-     * @internal
-     */
-    private resetCache(): void {
-        let size = this._size;
-        this.cacheEntities.length = size;
-        this.cacheComponents.length = size;
-        for (let i = 0; i < size; i++) {
-            this.cacheEntities[i] = this.entities[i];
-            this.cacheComponents[i] = this.dense[i];
+    /** 零GC遍历有效实体 */
+    public forEachEntity(callback: (entity: Entity, index: number) => void): void {
+        for (let i = 0; i < this._size; i++) {
+            callback(this.entities[i], i);
         }
-        this.isDirty = false;
     }
 
     /**

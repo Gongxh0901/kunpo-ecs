@@ -13,6 +13,9 @@ import { EntityPool } from "../entity/EntityPool";
 import { IQuery, IQueryEvent, IQueryResult } from "./IQuery";
 import { Matcher } from "./Matcher";
 
+/** 临时实体集合 去重用 */
+const temporaryEntitySet = new Set<Entity>();
+
 export class Query implements IQuery, IQueryResult, IQueryEvent {
     entityPool: EntityPool; // 实体池
     componentPool: ComponentPool; // 组件池
@@ -184,35 +187,36 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
         let total = 0;
         if (lessType === -1) {
             let anyTypes = matcher.ruleAnyOf.indices;
-            let entities = new Set(anyTypes.reduce((acc, type) => {
-                return acc.concat(componentPool.getEntitiesByComponentType(type));
-            }, [] as Entity[]));
-
-            this.preAllocate(entities.size);
-            entities.forEach(entity => {
+            // 使用Set去重 这里会产生GC
+            for (let type of anyTypes) {
+                let dense = componentPool.getPool(type);
+                dense.forEachEntity(entity => temporaryEntitySet.add(entity));
+            }
+            this.preAllocate(temporaryEntitySet.size);
+            temporaryEntitySet.forEach(entity => {
                 if (matcher.isMatch(this.entityPool.getMask(entity))) {
                     this.cachedEntities[total] = entity;
                     componentPool.getComponentBatch(entity, matcher.components, this.cachedComponents, total);
                     total++;
                 }
             });
+            temporaryEntitySet.clear();
             this.trimCache(total);
         } else if (lessType !== 0) {
             // 存在必须包含的组件类型
             // 从最小集合开始筛选 - 避免全量扫描
-            const entities = componentPool.getEntitiesByComponentType(lessType);
+            let dense = componentPool.getPool(lessType);
+            const size = dense.size;
+            this.preAllocate(size);
 
-            let len = entities.length;
-            this.preAllocate(len);
-            for (let i = 0; i < len; i++) {
-                const entity = entities[i];
+            dense.forEachEntity((entity) => {
                 if (!matcher.isMatch(this.entityPool.getMask(entity))) {
-                    continue;
+                    return;
                 }
                 this.cachedEntities[total] = entity;
                 componentPool.getComponentBatch(entity, matcher.components, this.cachedComponents, total);
                 total++;
-            }
+            });
         }
         // 如果结果数量小于预分配空间，裁剪数组
         this.trimCache(total);
@@ -249,14 +253,3 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
         }
     }
 }
-
-
-
-// let list = [];
-// list[5] = 1;
-
-// list[8] = 2;
-
-// for (let i = 0; i < list.length; i++) {
-//     console.log(">>>>", i, list[i]);
-// }
