@@ -7,26 +7,21 @@
 import { Component } from "../component/Component";
 import { ComponentPool } from "../component/ComponentPool";
 import { ComponentType } from "../component/ComponentType";
-import { IComponent } from "../component/IComponent";
 import { Entity } from "../entity/Entity";
 import { EntityPool } from "../entity/EntityPool";
 import { IQuery, IQueryEvent, IQueryResult } from "./IQuery";
 import { Matcher } from "./Matcher";
 
-/** 临时实体集合 去重用 */
-const temporaryEntitySet = new Set<Entity>();
+/** 临时数组 */
+const temporaryList: any[] = [];
 
 export class Query implements IQuery, IQueryResult, IQueryEvent {
     entityPool: EntityPool; // 实体池
     componentPool: ComponentPool; // 组件池
-
     matcher: Matcher;
 
-    cachedEntities: Entity[] = [];
-    cachedComponents: IComponent[][] = [];
-
+    entitys: Set<Entity> = new Set();
     changeEntities: Set<Entity> = new Set();
-    matchEntities: Map<Entity, number> = new Map();
     needFullRefresh: boolean = false;
 
     constructor(componentPool: ComponentPool, entityPool: EntityPool, matcher: Matcher) {
@@ -34,13 +29,7 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
         this.entityPool = entityPool;
         this.matcher = matcher;
 
-        this.cachedEntities.length = 0;
-
-        let components = matcher.components;
-        let len = components.length;
-        for (let i = 0; i < len; i++) {
-            this.cachedComponents[components[i]] = [];
-        }
+        this.entitys.clear();
     }
 
     public changeEntity(entity: Entity): void {
@@ -68,72 +57,15 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
         }
     }
 
-    /**
-     * 迭代满足条件的实体
-     * @returns 满足条件的实体
-     */
-    public entities(): Entity[] {
-        if (this.needFullRefresh) {
-            this.cacheReset();
-            this.needFullRefresh = false;
-            this.changeEntities.clear();
-        } else if (this.changeEntities.size > 0) {
-            this.cacheRefresh();
-            this.changeEntities.clear();
-        }
-        return this.cachedEntities;
-    }
-
-    public components<T extends Component>(comp: ComponentType<T>): T[] {
-        if (this.needFullRefresh) {
-            this.cacheReset();
-            this.needFullRefresh = false;
-            this.changeEntities.clear();
-        } else if (this.changeEntities.size > 0) {
-            this.cacheRefresh();
-            this.changeEntities.clear();
-        }
-        return this.cachedComponents[comp.ctype] as T[];
-    }
-
     public cacheRefresh(): void {
         for (let entity of this.changeEntities.values()) {
             let mask = this.entityPool.getMask(entity);
-            let hasMatch = this.matchEntities.has(entity);
             if (mask && this.matcher.isMatch(mask)) {
-                // 直接添加
-                let index = this.cachedEntities.length;
-                if (hasMatch) {
-                    index = this.matchEntities.get(entity);
-                }
-                this.cachedEntities[index] = entity;
-                this.matchEntities.set(entity, index);
-
-                this.componentPool.getComponentBatch(entity, this.matcher.components, this.cachedComponents, index);
-            } else if (hasMatch) {
-                let components = this.matcher.components;
-
-                // 实体被删除了, 从缓存中移除
-                let index = this.matchEntities.get(entity);
-                const lastIndex = this.cachedEntities.length - 1;
-                if (index !== lastIndex) {
-                    // 移动最后一个元素到要删除的元素位置
-                    this.cachedEntities[index] = this.cachedEntities[lastIndex];
-                    // 更新索引
-                    this.matchEntities.set(this.cachedEntities[index], index);
-                    // 更新组件位置
-                    let len = components.length;
-                    for (let i = 0; i < len; i++) {
-                        let list = this.cachedComponents[components[i]];
-                        list[index] = list[lastIndex];
-                    }
-                }
-                this.cachedEntities.pop();
-                this.matchEntities.delete(entity);
-                let len = components.length;
-                for (let i = 0; i < len; i++) {
-                    this.cachedComponents[components[i]].pop();
-                }
+                // 添加
+                this.entitys.add(entity);
+            } else if (this.entitys.has(entity)) {
+                // 删除
+                this.entitys.delete(entity);
             }
         }
     }
@@ -170,88 +102,117 @@ export class Query implements IQuery, IQueryResult, IQueryEvent {
         return lessType;
     }
 
-    /** 预分配空间 */
-    private preAllocate(count: number): void {
-        // 预分配足够空间，避免动态扩容
-        this.cachedEntities.length = count;
-
-        const components = this.matcher.components
-        const len = components.length;
-        for (let i = 0; i < len; i++) {
-            this.cachedComponents[components[i]].length = count;
-        }
-    }
-
     public cacheReset(): void {
         const matcher = this.matcher;
         let componentPool = this.componentPool;
         let lessType = this.checkAllOf();
-        let total = 0;
+        this.entitys.clear();
+
         if (lessType === -1) {
             let anyTypes = matcher.ruleAnyOf.indices;
             // 使用Set去重 这里会产生GC
             for (let type of anyTypes) {
                 let dense = componentPool.getPool(type);
-                dense.forEachEntity(entity => temporaryEntitySet.add(entity));
+                dense.forEachEntity(entity => {
+                    if (matcher.isMatch(this.entityPool.getMask(entity))) {
+                        this.entitys.add(entity)
+                    }
+                });
             }
-            this.preAllocate(temporaryEntitySet.size);
-            temporaryEntitySet.forEach(entity => {
-                if (matcher.isMatch(this.entityPool.getMask(entity))) {
-                    this.cachedEntities[total] = entity;
-                    componentPool.getComponentBatch(entity, matcher.components, this.cachedComponents, total);
-                    total++;
-                }
-            });
-            temporaryEntitySet.clear();
-            this.trimCache(total);
         } else if (lessType !== 0) {
             // 存在必须包含的组件类型
             // 从最小集合开始筛选 - 避免全量扫描
             let dense = componentPool.getPool(lessType);
-            const size = dense.size;
-            this.preAllocate(size);
-
+            // const size = dense.size;
             dense.forEachEntity((entity) => {
-                if (!matcher.isMatch(this.entityPool.getMask(entity))) {
-                    return;
+                if (matcher.isMatch(this.entityPool.getMask(entity))) {
+                    this.entitys.add(entity)
                 }
-                this.cachedEntities[total] = entity;
-                componentPool.getComponentBatch(entity, matcher.components, this.cachedComponents, total);
-                total++;
             });
-        }
-        // 如果结果数量小于预分配空间，裁剪数组
-        this.trimCache(total);
-    }
-
-    /**
-     * 截取缓存数组长度
-     */
-    private trimCache(length: number): void {
-        this.cachedEntities.length = length;
-
-        let components = this.matcher.components;
-        let len = components.length;
-        for (let i = 0; i < len; i++) {
-            this.cachedComponents[components[i]].length = length;
-        }
-
-        // 重建实体的索引
-        this.matchEntities.clear();
-        for (let i = 0; i < length; i++) {
-            this.matchEntities.set(this.cachedEntities[i], i);
         }
     }
 
     public clear(): void {
-        this.cachedEntities = [];
+        this.entitys.clear();
         this.changeEntities.clear();
-        this.matchEntities.clear();
+    }
 
-        let components = this.matcher.components;
-        let len = components.length;
-        for (let i = 0; i < len; i++) {
-            this.cachedComponents[components[i]] = [];
+    public getEntitys(): Entity[] {
+        return Array.from(this.entitys);
+    }
+
+    private lazyRefresh(): void {
+        if (this.needFullRefresh) {
+            this.cacheReset();
+            this.needFullRefresh = false;
+            this.changeEntities.clear();
+        } else if (this.changeEntities.size > 0) {
+            this.cacheRefresh();
+            this.changeEntities.clear();
+        }
+    }
+
+    /** 通用迭代器实现，会产生极少的GC */
+    public *iterate(...comps: ComponentType<Component>[]): IterableIterator<any> {
+        this.lazyRefresh();
+        const pool = this.componentPool;
+        temporaryList.length = 0;
+        for (let entity of this.entitys) {
+            for (let i = 0; i < comps.length; i++) {
+                let component = pool.getComponent(entity, comps[i].ctype);
+                temporaryList.push(component);
+            }
+            yield [entity, ...temporaryList];
+        }
+    }
+
+    /** 零GC 单组件迭代器 */
+    public *iterate1<T extends Component>(comp: ComponentType<T>): IterableIterator<[Entity, T]> {
+        this.lazyRefresh();
+        const pool = this.componentPool;
+        temporaryList.length = 0;
+        for (let entity of this.entitys) {
+            const c1 = pool.getComponent(entity, comp.ctype) as T;
+            yield [entity, c1];
+        }
+    }
+
+    /** 零GC 双组件迭代器 */
+    public *iterate2<T1 extends Component, T2 extends Component>(comp1: ComponentType<T1>, comp2: ComponentType<T2>): IterableIterator<[Entity, T1, T2]> {
+        this.lazyRefresh();
+        const pool = this.componentPool;
+        temporaryList.length = 0;
+        for (let entity of this.entitys) {
+            const c1 = pool.getComponent(entity, comp1.ctype) as T1;
+            const c2 = pool.getComponent(entity, comp2.ctype) as T2;
+            yield [entity, c1, c2];
+        }
+    }
+
+    /** 零GC 三组件迭代器 */
+    public *iterate3<T1 extends Component, T2 extends Component, T3 extends Component>(comp1: ComponentType<T1>, comp2: ComponentType<T2>, comp3: ComponentType<T3>): IterableIterator<[Entity, T1, T2, T3]> {
+        this.lazyRefresh();
+        const pool = this.componentPool;
+        temporaryList.length = 0;
+        for (let entity of this.entitys) {
+            const c1 = pool.getComponent(entity, comp1.ctype) as T1;
+            const c2 = pool.getComponent(entity, comp2.ctype) as T2;
+            const c3 = pool.getComponent(entity, comp3.ctype) as T3;
+            yield [entity, c1, c2, c3];
+        }
+    }
+
+    /** 零GC 四组件迭代器 */
+    public *iterate4<T1 extends Component, T2 extends Component, T3 extends Component, T4 extends Component>(comp1: ComponentType<T1>, comp2: ComponentType<T2>, comp3: ComponentType<T3>, comp4: ComponentType<T4>): IterableIterator<[Entity, T1, T2, T3, T4]> {
+        this.lazyRefresh();
+        const pool = this.componentPool;
+        temporaryList.length = 0;
+        for (let entity of this.entitys) {
+            const c1 = pool.getComponent(entity, comp1.ctype) as T1;
+            const c2 = pool.getComponent(entity, comp2.ctype) as T2;
+            const c3 = pool.getComponent(entity, comp3.ctype) as T3;
+            const c4 = pool.getComponent(entity, comp4.ctype) as T4;
+            yield [entity, c1, c2, c3, c4];
         }
     }
 }

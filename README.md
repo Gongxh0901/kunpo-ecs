@@ -99,23 +99,10 @@ class MovementSystem extends System {
   
     // 更新
     update(dt: number): void {
-        // 获取所有筛选出来的实体
-        const entities = this.query.getEntities();
-      	// 获取必须包含的组件
-        const positions = this.query.getComponents(Position);
-        const velocities = this.query.getComponents(Velocity);
-      
-      	// 这是可选的组件
-      	const component2s = this.query.getComponents(Component2);
-        
-        // 更新所有实体的位置
-        for (let i = 0; i < entities.length; i++) {
-            positions[i].x += velocities[i].vx * dt;
-            positions[i].y += velocities[i].vy * dt;
-          
-          	if (component2s[i]) {
-								// do something
-            }
+        const query = this.query;
+        for (const [entity, position, speed, direction] of query.iterate3(Position, Speed, Direction)) {
+            position.x += direction.x * speed.speed * dt;
+            position.y += direction.y * speed.speed * dt;
         }
     }
 }
@@ -187,6 +174,49 @@ world.update(dt);
   // 通过配置创建实体
   world.createEntity("Entity1");
   ```
+
+### 5. 查询器
+
+* 查询结果提供3种方式获取
+
+  1. 直接获取匹配实体的集合 entitys
+
+     ```typescript
+     this.query.entitys
+     ```
+
+  2. 通用迭代器，最多同时获取8种类型的组件，极少量GC
+
+     ```typescript
+     for (const [entity, position, speed, direction] of query.iterate(Position, Speed, Direction)) {
+         position.x += speed.speed * dt;
+         position.y += speed.speed * dt;
+         kunpo.log("direction", direction);
+     }
+     ```
+
+  3. 特定数量迭代器（1/2/3/4），零GC
+
+     ```typescript
+     for (const [entity, position] of query.iterate1(Position)) {
+     		log(position.x, position.y)
+     }
+     
+     for (const [entity, position, speed] of query.iterate2(Position, Speed, Direction)) {
+     
+     }
+     
+     for (const [entity, position, speed, direction] of query.iterate3(Position, Speed, Direction)) {
+     
+     }
+     
+     for (const [entity, position, speed, direction, scale] of query.iterate3(Position, Speed, Direction, Scale)) {
+     
+     }
+     ```
+
+     
+
 
 
 ## 注意事项
