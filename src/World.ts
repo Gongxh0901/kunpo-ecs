@@ -100,12 +100,23 @@ export class World {
     /** 
      * 通过配置数据创建实体
      * @param entityName 实体名 (kunpo-ec插件中导出的实体名)
+     * @param customInfo 自定义信息 
+     * {
+     *     "组件名": {
+     *         "属性名1": "属性值"
+     *         "属性名2": "属性值"
+     *     },
+     *     "组件名2": {
+     *         "属性名1": "属性值"
+     *         "属性名2": "属性值"
+     *     }
+     * }
      * @returns 实体和组件
      */
-    public createEntity(entityName: string): { entity: Entity, components: Record<string, Component> } {
+    public createEntity(entityName: string, customInfo?: Record<string, Record<string, any>>): { entity: Entity, components: Record<string, Component> } {
         const entity = this.entityPool.createEntity();
         const entityConfig = Data.getEntityConfig(entityName);
-        return { entity: entity, components: this.addComponents(entity, entityConfig) };
+        return { entity: entity, components: this.addComponents(entity, entityConfig, customInfo) };
     }
 
     /** 
@@ -130,9 +141,14 @@ export class World {
      * @param comp 组件类型
      * @returns 组件实例
      */
-    public addComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>): T {
+    public addComponent<T extends IComponent>(entity: Entity, comp: ComponentType<T>, props?: Record<string, any>): T {
         let component = this.componentPool.createComponent(comp.ctype);
         this.commandPool.addComponent(entity, comp.ctype, component);
+        if (props) {
+            for (const key in props) {
+                (component as any)[key] = props[key];
+            }
+        }
         return component as T;
     }
 
@@ -140,16 +156,12 @@ export class World {
      * 添加组件 实际是加入缓冲池，等待帧结束时执行
      * @internal
      */
-    private addComponents(entity: Entity, infos: { name: string, props: Record<string, any> }[]): Record<string, Component> {
+    private addComponents(entity: Entity, infos: { name: string, props: Record<string, any> }[], customInfo?: Record<string, Record<string, any>>): Record<string, Component> {
         let result = {} as Record<string, Component>;
         for (const { name, props } of infos) {
             const comp = _ecsdecorator.getComponentCtor(name);
-            let component = this.componentPool.createComponent(comp.ctype);
-            for (const key in props) {
-                (component as any)[key] = props[key];
-            }
+            const component = this.addComponent(entity, comp, (customInfo && customInfo[name]) ? Object.assign({}, props, customInfo[name]) : props);
             result[name] = component;
-            this.commandPool.addComponent(entity, comp.ctype, component);
         }
         return result;
     }
