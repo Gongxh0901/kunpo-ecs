@@ -159,7 +159,8 @@ export class EntityPool {
      * @returns 是否拥有
      */
     public hasComponent(entity: Entity, componentType: number): boolean {
-        return this.entityMasks.get(entity)?.has(componentType) || false;
+        const mask = this.entityMasks.get(entity)
+        return mask ? mask.has(componentType) : false;
     }
 
     /**
@@ -173,7 +174,8 @@ export class EntityPool {
 
     /** 遍历实体上的组件 */
     public forEachComponent(entity: Entity, callback: (componentType: number) => void): void {
-        this.entityMasks.get(entity)?.values().forEach(componentType => callback(componentType));
+        let mask = this.entityMasks.get(entity)
+        mask && mask.values().forEach(componentType => callback(componentType));
     }
 
     /** 遍历所有实体 */

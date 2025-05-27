@@ -149,7 +149,7 @@ export namespace _ecsdecorator {
             eclassMap.set(ctor, {
                 name: name,
                 props: ctor[ECPropMeta],
-                describe: res?.describe || name
+                describe: (res && res.describe) ? res.describe : name
             });
         };
     }
