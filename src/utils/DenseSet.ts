@@ -152,6 +152,9 @@ export class DenseSet<T extends IComponent> {
      * @internal
      */
     public clear(): void {
+        for (let i = 0; i < this._size; i++) {
+            this.dense[i].reset();
+        }
         this.dense.length = 0;
         this.entities.length = 0;
         this.entityToIndex.clear();
