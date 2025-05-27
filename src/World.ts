@@ -73,8 +73,8 @@ export class World {
      * 添加系统
      * @param system 系统
      */
-    public addSystem(system: ISystem): void {
-        this.rootSystem.addSystem(system);
+    public addSystem(system: ISystem): SystemGroup {
+        return this.rootSystem.addSystem(system);
     }
 
     /** 
