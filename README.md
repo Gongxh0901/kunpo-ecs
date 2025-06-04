@@ -23,7 +23,7 @@
 ## 安装
 
 ```bash
-npm install kunpo-esc
+npm install kunpocc-esc
 ```
 
 ## 核心概念
@@ -37,10 +37,10 @@ npm install kunpo-esc
 
 ### 1. 定义组件
 
-* 使用装饰器标记的属性 才能被 ***kunpoec*** 插件检测到
+* 使用装饰器标记的属性 才能被 ***kunpo-ec*** 插件检测到
 
 ```typescript
-import { _ecsdecorator, Component } from 'kunpo-esc';
+import { _ecsdecorator, Component } from 'kunpocc-esc';
 const { ecsclass, ecsprop } = _ecsdecorator;
 
 // 定义位置组件

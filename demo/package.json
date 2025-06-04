@@ -1,0 +1,13 @@
+{
+  "name": "kunpocreator",
+  "uuid": "f5d24040-9cd4-4a5a-8559-38bf55e621f7",
+  "creator": {
+    "version": "3.8.6"
+  },
+  "dependencies": {
+    "kunpocc-assets": "^0.0.1",
+    "kunpocc-ecs": "^0.0.2",
+    "kunpocc-quadtree": "^0.0.1",
+    "ts-node": "^10.9.2"
+  }
+}

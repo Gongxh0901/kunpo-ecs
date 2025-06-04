@@ -1,6 +1,6 @@
 {
     "name": "kunpocc-ecs",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "description": "一个ts实现的ECS系统",
     "main": "./dist/kunpocc-ecs.cjs",
     "module": "./dist/kunpocc-ecs.mjs",
@@ -21,7 +21,7 @@
       "dev": "ts-node-dev --respawn src/index.ts",
       "clean": "rm -rf dist",
       "build": "npm run clean && rollup -c rollup.config.mjs",
-      "copy": "cp -r dist/* ../KunpoDemo/node_modules/kunpocc-ecs/dist/",
+      "copy": "cp -r dist/* demo/node_modules/kunpocc-ecs/dist/",
       "build:all": "npm run build && npm run copy"
   },
   "files": [

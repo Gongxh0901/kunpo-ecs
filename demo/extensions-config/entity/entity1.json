@@ -1,0 +1,98 @@
+{
+    "name": "entity1",
+    "alias": "实体1",
+    "group": "",
+    "components": [
+        {
+            "name": "RootNode",
+            "props": {}
+        },
+        {
+            "name": "Transform",
+            "props": {}
+        },
+        {
+            "name": "Move",
+            "props": {
+                "_speed": 120
+            }
+        },
+        {
+            "name": "LimitMove",
+            "props": {
+                "radius": 30
+            }
+        },
+        {
+            "name": "PositionUpdateSystem",
+            "props": {}
+        },
+        {
+            "name": "ScreenRebound",
+            "props": {}
+        },
+        {
+            "name": "RenderPrefab",
+            "props": {
+                "uuid": "56dc9bdf-19c7-4319-8c27-628ea6424696"
+            }
+        },
+        {
+            "name": "Position",
+            "props": {
+                "x": 1,
+                "y": 1
+            }
+        },
+        {
+            "name": "SpriteFrame",
+            "props": {
+                "uuid": "90e60c62-448b-4295-b720-a9f133c6b9bf@f9941"
+            }
+        },
+        {
+            "name": "Direction",
+            "props": {
+                "x": 0.6,
+                "y": 0.3
+            }
+        },
+        {
+            "name": "Speed",
+            "props": {
+                "speed": 25
+            }
+        },
+        {
+            "name": "Scale",
+            "props": {
+                "scale": 1
+            }
+        },
+        {
+            "name": "LifeTime",
+            "props": {
+                "lifeTime": 8
+            }
+        },
+        {
+            "name": "ShapeCircle",
+            "props": {
+                "radius": 25,
+                "tag": "Enemy",
+                "offsetX": 0,
+                "offsetY": 0
+            }
+        },
+        {
+            "name": "Rebound",
+            "props": {}
+        },
+        {
+            "name": "CollideQuery",
+            "props": {
+                "mask": "Enemy"
+            }
+        }
+    ]
+}

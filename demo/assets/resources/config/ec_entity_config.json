@@ -1,0 +1,40 @@
+{
+    "entity1": {
+        "CollideQuery": {
+            "mask": 2
+        },
+        "Direction": {
+            "x": 0.6,
+            "y": 0.3
+        },
+        "LifeTime": {
+            "lifeTime": 8
+        },
+        "Position": {
+            "x": 1,
+            "y": 1
+        },
+        "Rebound": {},
+        "Scale": {
+            "scale": 1
+        },
+        "ShapeCircle": {
+            "offsetX": 0,
+            "offsetY": 0,
+            "radius": 25,
+            "tag": 2
+        },
+        "Speed": {
+            "speed": 25
+        },
+        "SpriteFrame": {
+            "uuid": "90e60c62-448b-4295-b720-a9f133c6b9bf@f9941"
+        }
+    },
+    "entity2": {
+        "Position": {
+            "x": 0,
+            "y": 0
+        }
+    }
+}
