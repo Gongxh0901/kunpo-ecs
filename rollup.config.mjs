@@ -5,18 +5,18 @@ import dts from 'rollup-plugin-dts';
 export default [
     {
         // 生成未压缩的 JS 文件
-        input: 'src/kunpoecs.ts',
+        input: 'src/kunpocc-ecs.ts',
         external: ['cc', 'fairygui-cc'],
         output: [
             {
-                file: 'dist/kunpoecs.mjs',
+                file: 'dist/kunpocc-ecs.mjs',
                 format: 'esm',
-                name: 'kunpoecs'
+                name: 'kunpocc-ecs'
             },
             {
-                file: 'dist/kunpoecs.cjs',
+                file: 'dist/kunpocc-ecs.cjs',
                 format: 'cjs',
-                name: 'kunpoecs'
+                name: 'kunpocc-ecs'
             }
         ],
         plugins: [
@@ -38,18 +38,18 @@ export default [
     },
     {
         // 生成压缩的 JS 文件
-        input: 'src/kunpoecs.ts',
+        input: 'src/kunpocc-ecs.ts',
         external: ['cc', 'fairygui-cc'],
         output: [
             {
-                file: 'dist/kunpoecs.min.mjs',
+                file: 'dist/kunpocc-ecs.min.mjs',
                 format: 'esm',
-                name: 'kunpoecs'
+                name: 'kunpocc-ecs'
             },
             {
-                file: 'dist/kunpoecs.min.cjs',
+                file: 'dist/kunpocc-ecs.min.cjs',
                 format: 'cjs',
-                name: 'kunpoecs'
+                name: 'kunpocc-ecs'
             }
         ],
         plugins: [
@@ -72,9 +72,9 @@ export default [
     },
     {
         // 生成声明文件的配置
-        input: 'src/kunpoecs.ts',
+        input: 'src/kunpocc-ecs.ts',
         output: {
-            file: 'dist/kunpoecs.d.ts',
+            file: 'dist/kunpocc-ecs.d.ts',
             format: 'es'
         },
         plugins: [dts({

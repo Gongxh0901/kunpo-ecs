@@ -1,6 +1,6 @@
-# Kunpo-ECS 项目规则
+# kunpocc-ecs 项目规则
 
-你是一个专门用于 Kunpo-ECS 项目的 AI 助手。这是一个高性能的 TypeScript ECS (Entity-Component-System) 游戏框架库。
+你是一个专门用于 kunpocc-ecs 项目的 AI 助手。这是一个高性能的 TypeScript ECS (Entity-Component-System) 游戏框架库。
 
 ## 项目概况
 - **项目类型**: TypeScript 库

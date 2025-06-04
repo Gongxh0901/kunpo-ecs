@@ -1,35 +1,35 @@
 {
-    "name": "kunpoecs",
-    "version": "0.1.2",
+    "name": "kunpocc-ecs",
+    "version": "0.0.1",
     "description": "一个ts实现的ECS系统",
-    "main": "./dist/kunpoecs.cjs",
-    "module": "./dist/kunpoecs.mjs",
-    "types": "./dist/kunpoecs.d.ts",
+    "main": "./dist/kunpocc-ecs.cjs",
+    "module": "./dist/kunpocc-ecs.mjs",
+    "types": "./dist/kunpocc-ecs.d.ts",
     "exports": {
         ".": {
-            "require": "./dist/kunpoecs.cjs",
-            "import": "./dist/kunpoecs.mjs",
-            "types": "./dist/kunpoecs.d.ts",
-            "default": "./dist/kunpoecs.cjs"
+            "require": "./dist/kunpocc-ecs.cjs",
+            "import": "./dist/kunpocc-ecs.mjs",
+            "types": "./dist/kunpocc-ecs.d.ts",
+            "default": "./dist/kunpocc-ecs.cjs"
         },
         "./min": {
-            "require": "./dist/kunpoecs.min.cjs",
-            "import": "./dist/kunpoecs.min.mjs"
+            "require": "./dist/kunpocc-ecs.min.cjs",
+            "import": "./dist/kunpocc-ecs.min.mjs"
         }
     },
     "scripts": {
       "dev": "ts-node-dev --respawn src/index.ts",
       "clean": "rm -rf dist",
       "build": "npm run clean && rollup -c rollup.config.mjs",
-      "copy": "cp -r dist/* ../KunpoDemo/node_modules/kunpoecs/dist/",
+      "copy": "cp -r dist/* ../KunpoDemo/node_modules/kunpocc-ecs/dist/",
       "build:all": "npm run build && npm run copy"
   },
   "files": [
-      "dist/kunpoecs.cjs",
-      "dist/kunpoecs.mjs",
-      "dist/kunpoecs.min.cjs",
-      "dist/kunpoecs.min.mjs",
-      "dist/kunpoecs.d.ts"
+      "dist/kunpocc-ecs.cjs",
+      "dist/kunpocc-ecs.mjs",
+      "dist/kunpocc-ecs.min.cjs",
+      "dist/kunpocc-ecs.min.mjs",
+      "dist/kunpocc-ecs.d.ts"
   ],
 
     "author": "gongxh",
