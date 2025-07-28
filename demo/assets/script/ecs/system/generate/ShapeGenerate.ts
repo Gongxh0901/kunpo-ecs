@@ -28,7 +28,7 @@ export class ShapeGenerate extends ecs.System {
         }
         for (const [entity, position, circle, box, scale] of query.iterate4(Position, ShapeCircle, ShapeBox, Scale)) {
             if (circle) {
-                let shape = new KunpoQuadtree.Circle(circle.radius, 1 << circle.tag);
+                let shape = KunpoQuadtree.createCircle(circle.radius, 1 << circle.tag);
                 shape.setScale(scale ? scale.scale : 1);
                 shape.setPosition(position.x, position.y);
 
@@ -42,7 +42,7 @@ export class ShapeGenerate extends ecs.System {
                 // 删除组件
                 this.world.removeComponent(entity, ShapeCircle);
             } else if (box) {
-                let shape = new KunpoQuadtree.Box(box.x, box.y, box.width, box.height, 1 << box.tag);
+                let shape = KunpoQuadtree.createBox(box.x, box.y, box.width, box.height, 1 << box.tag);
                 shape.setScale(scale ? scale.scale : 1);
                 shape.setPosition(position.x, position.y);
 

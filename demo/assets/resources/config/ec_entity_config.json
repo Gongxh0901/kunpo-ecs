@@ -36,5 +36,66 @@
             "x": 0,
             "y": 0
         }
+    },
+    "entity3": {
+        "CollideQuery": {
+            "mask": 2
+        },
+        "Direction": {
+            "x": 0.9,
+            "y": 0.3
+        },
+        "Position": {
+            "x": -100,
+            "y": 105
+        },
+        "Rebound": {},
+        "Scale": {
+            "scale": 1.2
+        },
+        "ShapeBox": {
+            "height": 100,
+            "offsetX": 0,
+            "offsetY": 0,
+            "tag": 2,
+            "width": 100,
+            "x": -50,
+            "y": -50
+        },
+        "Speed": {
+            "speed": 0
+        },
+        "SpriteFrame": {
+            "uuid": "90e60c62-448b-4295-b720-a9f133c6b9bf@f9941"
+        }
+    },
+    "entity4": {
+        "CollideQuery": {
+            "mask": 2
+        },
+        "Direction": {
+            "x": 0.6,
+            "y": 0.3
+        },
+        "Position": {
+            "x": 100,
+            "y": 100
+        },
+        "Rebound": {},
+        "Scale": {
+            "scale": 1.2
+        },
+        "ShapeCircle": {
+            "offsetX": 0,
+            "offsetY": 0,
+            "radius": 100,
+            "tag": 2
+        },
+        "Speed": {
+            "speed": 0
+        },
+        "SpriteFrame": {
+            "uuid": "90e60c62-448b-4295-b720-a9f133c6b9bf@f9941"
+        }
     }
 }

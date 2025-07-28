@@ -47,7 +47,7 @@ export class WorldHelper {
             .addSystem(new RenderGenerate())
             ;
 
-        let gapGroup = new ecs.SystemGroup("gap", 2);
+        let gapGroup = new ecs.SystemGroup("gap", 1);
         gapGroup.addSystem(new CollideQuerySystem())
 
         let debugGroup = new ecs.SystemGroup("debug", 30);

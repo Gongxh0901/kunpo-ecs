@@ -1,0 +1,95 @@
+{
+    "name": "entity3",
+    "alias": "实体1",
+    "group": "",
+    "components": [
+        {
+            "name": "RootNode",
+            "props": {}
+        },
+        {
+            "name": "Transform",
+            "props": {}
+        },
+        {
+            "name": "Move",
+            "props": {
+                "_speed": 120
+            }
+        },
+        {
+            "name": "LimitMove",
+            "props": {
+                "radius": 30
+            }
+        },
+        {
+            "name": "PositionUpdateSystem",
+            "props": {}
+        },
+        {
+            "name": "ScreenRebound",
+            "props": {}
+        },
+        {
+            "name": "RenderPrefab",
+            "props": {
+                "uuid": "56dc9bdf-19c7-4319-8c27-628ea6424696"
+            }
+        },
+        {
+            "name": "Position",
+            "props": {
+                "x": -100,
+                "y": 105
+            }
+        },
+        {
+            "name": "Direction",
+            "props": {
+                "x": 0.9,
+                "y": 0.3
+            }
+        },
+        {
+            "name": "Speed",
+            "props": {
+                "speed": 0
+            }
+        },
+        {
+            "name": "Scale",
+            "props": {
+                "scale": 1.2
+            }
+        },
+        {
+            "name": "Rebound",
+            "props": {}
+        },
+        {
+            "name": "CollideQuery",
+            "props": {
+                "mask": "Enemy"
+            }
+        },
+        {
+            "name": "ShapeBox",
+            "props": {
+                "width": 100,
+                "height": 100,
+                "x": -50,
+                "y": -50,
+                "tag": "Enemy",
+                "offsetX": 0,
+                "offsetY": 0
+            }
+        },
+        {
+            "name": "SpriteFrame",
+            "props": {
+                "uuid": "90e60c62-448b-4295-b720-a9f133c6b9bf@f9941"
+            }
+        }
+    ]
+}
