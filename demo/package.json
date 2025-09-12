@@ -6,6 +6,7 @@
   },
   "dependencies": {
     "kunpocc-assets": "^0.0.1",
+    "kunpocc-behaviortree": "^0.0.6",
     "kunpocc-ecs": "^0.0.2",
     "kunpocc-quadtree": "^0.1.0",
     "ts-node": "^10.9.2"

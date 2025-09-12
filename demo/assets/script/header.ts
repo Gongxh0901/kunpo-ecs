@@ -5,8 +5,8 @@
  */
 
 import * as KunpoAssets from "kunpocc-assets";
+import * as BT from "kunpocc-behaviortree";
 import * as ecs from "kunpocc-ecs";
 import * as KunpoQuadtree from "kunpocc-quadtree";
-
-export { ecs, KunpoAssets, KunpoQuadtree };
+export { BT, ecs, KunpoAssets, KunpoQuadtree };
 
